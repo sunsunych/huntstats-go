@@ -14,8 +14,19 @@ var (
 	timezone string
 )
 
+type (
+	Attributes struct {
+		Path string
+	}
+
+	configfile struct {
+		Attributes Attributes
+	}
+)
+
 func main() {
 	fmt.Printf("Start app...\n")
+	readConfig()
 	systray.Run(onReady, onExit)
 }
 
