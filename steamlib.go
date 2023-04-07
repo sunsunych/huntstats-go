@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/andygrunwald/vdf"
@@ -11,19 +12,32 @@ type Libfolders struct {
 	Folderslist map[string]interface{}
 }
 
-func FindAttributesFolder(steamappspath string) {
+// var huntsteamappid = "594650"
+var huntprofilespath = "\\steamapps\\common\\Hunt Showdown\\user\\profiles\\default"
+
+func FindAttributesFolder(steamappspath string) string {
 	libfolders := SearchHuntAppFolder(steamappspath)
-	for key, value := range libfolders {
-		fmt.Println("[", key, "] has items:")
+	appspath := ""
+	temppath := ""
+
+	for _, value := range libfolders {
+		// libraryfolders
 		for _, v := range value.(map[string]interface{}) {
-			// fmt.Println("\t-->", k, ":", v, "\n")
+			// item in library folders
 			for kk, vv := range v.(map[string]interface{}) {
-				fmt.Println("\t\t-->", kk, ":", vv, "\n")
+				if kk == "path" {
+					temppath = fmt.Sprint(vv)
+					foldercheck := temppath + huntprofilespath
+					_, err := os.Stat(foldercheck)
+					if os.IsNotExist(err) {
+						log.Printf("Folder does not exist.")
+					}
+					appspath = foldercheck
+				}
 			}
 		}
-
 	}
-	fmt.Println(libfolders)
+	return appspath
 }
 
 func SearchHuntAppFolder(filepath string) map[string]interface{} {

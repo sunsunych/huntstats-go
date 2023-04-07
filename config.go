@@ -21,7 +21,6 @@ func ReadConfig(filename string) configfile {
 	var cfg configfile
 
 	f := readFile(filename)
-	GetRegSteamFolderValue()
 
 	err := toml.Unmarshal(f, &cfg)
 	check(err)
@@ -52,7 +51,7 @@ func readFile(filename string) []byte {
 	return content
 }
 
-func GetRegSteamFolderValue() {
+func GetRegSteamFolderValue() string {
 	winInfo, err := registry.OpenKey(registry.LOCAL_MACHINE, `SOFTWARE\WOW6432Node\Valve\Steam`, registry.QUERY_VALUE)
 	check(err)
 	defer winInfo.Close()
@@ -61,6 +60,6 @@ func GetRegSteamFolderValue() {
 	LibFoldersVdf := SteamPath + "\\steamapps\\libraryfolders.vdf"
 	check(err)
 
-	FindAttributesFolder(LibFoldersVdf)
-
+	attributesfolder := FindAttributesFolder(LibFoldersVdf)
+	return attributesfolder
 }

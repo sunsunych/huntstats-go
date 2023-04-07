@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"os"
 	"strconv"
 	"time"
 
@@ -70,7 +71,11 @@ func getIcon(s string) []byte {
 func getAttributesFolder() {
 	confFile := ReadConfig("config.toml")
 	directorySelectDialog := dialog.Directory()
-	directorySelectDialog.SetStartDir(confFile.Attributes.Path)
+	if verifyAttributesExist(confFile.Attributes.Path) {
+		directorySelectDialog.SetStartDir(confFile.Attributes.Path)
+	} else {
+		directorySelectDialog.SetStartDir(GetRegSteamFolderValue())
+	}
 	directory, err := directorySelectDialog.Title("Find folder with attributes XML files").Browse()
 	if err != nil {
 		// fmt.Println("Error:", err)
@@ -84,4 +89,13 @@ func check(err error) {
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+func verifyAttributesExist(folderpath string) bool {
+	fullPath := folderpath + "\\attributes.xml"
+	_, err := os.Stat(fullPath)
+	if os.IsNotExist(err) {
+		return false
+	}
+	return true
 }
