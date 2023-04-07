@@ -17,14 +17,13 @@ var (
 )
 
 func main() {
-	confFile := ReadConfig("config.toml")
-	fmt.Println(confFile.Attributes.Path)
 	systray.Run(onReady, onExit)
 }
 
 func onReady() {
 	systray.SetIcon(getIcon("assets/statsicon.ico"))
-	timezone := "--"
+	cfgFile := ReadConfig("config.toml")
+	attrPath := cfgFile.Attributes.Path
 	mBrowseAttributes := systray.AddMenuItem("Attributes settings", "Attributes settings")
 	systray.AddSeparator()
 	mQuit := systray.AddMenuItem("Quit", "Quits this app")
@@ -32,7 +31,7 @@ func onReady() {
 	go func() {
 		for {
 			// systray.SetTitle(getClockTime(timezone))
-			systray.SetTooltip(timezone + " timezone")
+			systray.SetTooltip("AttrPath:\n" + attrPath + "\n\n ---")
 			time.Sleep(1 * time.Second)
 		}
 	}()
@@ -94,8 +93,5 @@ func check(err error) {
 func verifyAttributesExist(folderpath string) bool {
 	fullPath := folderpath + "\\attributes.xml"
 	_, err := os.Stat(fullPath)
-	if os.IsNotExist(err) {
-		return false
-	}
-	return true
+	return !os.IsNotExist(err)
 }
