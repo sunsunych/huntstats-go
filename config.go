@@ -8,12 +8,12 @@ import (
 )
 
 type (
-	Attributes struct {
+	AttributesSettings struct {
 		Path string
 	}
 
 	configfile struct {
-		Attributes Attributes
+		AttributesSettings AttributesSettings
 	}
 )
 

@@ -4,10 +4,11 @@ go 1.20
 
 require (
 	github.com/andygrunwald/vdf v1.1.0
+	github.com/fsnotify/fsnotify v1.6.0
 	github.com/getlantern/systray v1.2.1
 	github.com/pelletier/go-toml/v2 v2.0.7
 	github.com/sqweek/dialog v0.0.0-20220809060634-e981b270ebbf
-	golang.org/x/sys v0.0.0-20200515095857-1151b9dac4a9
+	golang.org/x/sys v0.0.0-20220908164124-27713097b956
 )
 
 require (
