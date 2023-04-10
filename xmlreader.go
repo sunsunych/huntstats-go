@@ -26,7 +26,7 @@ type Attr struct {
 
 // Match details struct - v1
 type Match struct {
-	MatchID  int
+	MatchID  uint64
 	TeamsQty int
 	Teams    []Team
 }
@@ -79,7 +79,8 @@ func IterateAttributesXML(attributeList Attributes) {
 	MatchData := new(Match)
 	MatchData.TeamsQty = attributeList.getTeamsAmount()
 	log.Printf("Total teams in match: %d\n", MatchData.TeamsQty)
-	attributeList.getTeamsDetails(MatchData.TeamsQty)
+	TeamsList := attributeList.getTeamsDetails(MatchData.TeamsQty)
+	log.Printf("Teams list: %v", TeamsList)
 }
 
 // Attributes methods
@@ -97,53 +98,20 @@ func (a *Attributes) getTeamsAmount() int {
 // Get details for each team
 func (a *Attributes) getTeamsDetails(teamsQty int) *[]Team {
 	Teams := new([]Team)
-	team := new(Team)
-	i := -1
+	teamData := new(Team)
+	lastTeamID := 0
+	teamData.TeamID = lastTeamID
 	for _, attrRecord := range a.Attr {
 		if strings.HasPrefix(attrRecord.NameKey, "MissionBagTeam_") {
 			teamIndex, success := getTeamIndexFromKey(attrRecord.NameKey)
-			if i != teamIndex && i > -1 && i < teamsQty {
-				log.Printf("==Save TeamID: %d==", team.TeamID)
-				team := new(Team)
-				i = teamIndex
-				team.TeamID = teamIndex
+			if lastTeamID != teamIndex && success {
+				teamData := new(Team)
+				teamData.TeamID = teamIndex
+				log.Printf("Start new team ID: %d")
+			} else {
+				//
 			}
-			if i != teamIndex || i == -1 {
-				log.Printf("New team")
-				team := new(Team)
-				i = teamIndex
-				team.TeamID = teamIndex
-			}
-			if success && teamIndex < (teamsQty) {
-				AttrName, AttrValue := getTeamAttributeAndValue(attrRecord)
-				team.TeamID = teamIndex
-				v := reflect.ValueOf(team).Elem()
-				for i := 0; i < v.NumField(); i++ {
-					tag := v.Type().Field(i).Tag.Get("hunttag")
-					if tag == AttrName {
-						log.Printf("Type of %s is %v", v.Type().Field(i).Name, v.Field(i).Type().Name())
-						switch v.Field(i).Type().Name() {
-						case "int":
-							intValue, err := strconv.ParseInt(AttrValue, 10, 64)
-							if err != nil {
-								log.Fatal(err)
-							}
-							v.Field(i).SetInt(intValue)
-						case "bool":
-							boolValue, err := strconv.ParseBool(AttrValue)
-							if err != nil {
-								log.Fatal(err)
-							}
-							v.Field(i).SetBool(boolValue)
-						default:
-							v.Field(i).SetString(AttrValue)
-						}
-					}
-				}
-				// team.SetValueByTeamHuntTag(teamIndex, AttrName, AttrValue)
-				log.Printf("Team: %v", team)
-				log.Printf("TeamID: %d | Parameter: %s | Value: %s \n", teamIndex, AttrName, AttrValue)
-			}
+			// log.Printf("TeamID: %d | Parameter: %s | Value: %s \n", teamIndex, AttrName, AttrValue)
 		}
 	}
 	return Teams

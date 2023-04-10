@@ -41,7 +41,7 @@ func onReady() {
 		for {
 			select {
 			case <-mBrowseAttributes.ClickedCh:
-				getAttributesFolder()
+				setAttributesFolderByBrowse()
 			case <-mQuit.ClickedCh:
 				systray.Quit()
 				return
@@ -68,7 +68,7 @@ func getIcon(s string) []byte {
 	return b
 }
 
-func getAttributesFolder() {
+func getAttributesFolder() string {
 	confFile := ReadConfig("config.toml")
 	directorySelectDialog := dialog.Directory()
 	if verifyAttributesExist(confFile.AttributesSettings.Path) {
@@ -80,10 +80,26 @@ func getAttributesFolder() {
 	if err != nil {
 		// fmt.Println("Error:", err)
 	} else {
-		fileInfo(confFile.AttributesSettings.Path + "\\attributes.xml")
+		// fileInfo(confFile.AttributesSettings.Path + "\\attributes.xml")
 		confFile.AttributesSettings.Path = directory
 		confFile.WriteConfigParamIntoFile("config.toml")
 	}
+	IterateAttributesXML()
+}
+
+func setAttributesFolderByBrowse() string {
+	confFile := ReadConfig("config.toml")
+	directorySelectDialog := dialog.Directory()
+	directorySelectDialog.SetStartDir(confFile.AttributesSettings.Path)
+	directory, err := directorySelectDialog.Title("Find folder with attributes XML files").Browse()
+	if err != nil {
+		// fmt.Println("Error:", err)
+	} else {
+		// fileInfo(confFile.AttributesSettings.Path + "\\attributes.xml")
+		confFile.AttributesSettings.Path = directory
+		confFile.WriteConfigParamIntoFile("config.toml")
+	}
+	// IterateAttributesXML()
 }
 
 func check(err error) {
