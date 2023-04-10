@@ -29,8 +29,6 @@ func onReady() {
 	mBrowseAttributes := systray.AddMenuItem("Set Attributes folder", "Set Attributes folder")
 	systray.AddSeparator()
 	mQuit := systray.AddMenuItem("Quit", "Quits this app")
-	// fileWatcher(attrPath + "\\attributes.xml")
-	fileInfo(attrPath + "\\attributes.xml")
 	go func() {
 		for {
 			// systray.SetTitle(getClockTime(timezone))
@@ -50,9 +48,6 @@ func onReady() {
 			}
 		}
 	}()
-
-	attrFile := attrPath + "\\attributes.xml"
-	AttributeXmlOpen(attrFile)
 }
 
 func onExit() {
@@ -85,6 +80,7 @@ func getAttributesFolder() {
 	if err != nil {
 		// fmt.Println("Error:", err)
 	} else {
+		fileInfo(confFile.AttributesSettings.Path + "\\attributes.xml")
 		confFile.AttributesSettings.Path = directory
 		confFile.WriteConfigParamIntoFile("config.toml")
 	}

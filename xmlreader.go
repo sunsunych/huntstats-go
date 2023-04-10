@@ -52,15 +52,6 @@ type Team struct {
 	IsOwn      bool `hunttag:"ownteam"`
 }
 
-func (t []Team) GetIndexByTeamID(tid int) int {
-	for ti, teamRecord := range *t {
-		if teamRecord.TeamID == tid {
-			return ti
-		}
-	}
-	return 0
-}
-
 type Player struct {
 	ProfileID  int
 	PlayerName string

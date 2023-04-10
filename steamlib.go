@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"reflect"
 
 	"github.com/andygrunwald/vdf"
 )
@@ -19,20 +20,25 @@ func FindAttributesFolder(steamappspath string) string {
 	libfolders := SearchHuntAppFolder(steamappspath)
 	appspath := ""
 	temppath := ""
+	log.Printf("libfolders length: %v", reflect.ValueOf(libfolders).Len())
 
-	for _, value := range libfolders {
-		// libraryfolders
-		for _, v := range value.(map[string]interface{}) {
-			// item in library folders
-			for kk, vv := range v.(map[string]interface{}) {
-				if kk == "path" {
-					temppath = fmt.Sprint(vv)
-					foldercheck := temppath + huntprofilespath
-					_, err := os.Stat(foldercheck)
-					if os.IsNotExist(err) {
-						log.Printf("Folder does not exist.")
+	if reflect.ValueOf(libfolders).Len() == 0 {
+		appspath = "C:\\"
+	} else {
+		for _, value := range libfolders {
+			// libraryfolders
+			for _, v := range value.(map[string]interface{}) {
+				// item in library folders
+				for kk, vv := range v.(map[string]interface{}) {
+					if kk == "path" {
+						temppath = fmt.Sprint(vv)
+						foldercheck := temppath + huntprofilespath
+						_, err := os.Stat(foldercheck)
+						if os.IsNotExist(err) {
+							log.Printf("Folder does not exist.")
+						}
+						appspath = foldercheck
 					}
-					appspath = foldercheck
 				}
 			}
 		}
