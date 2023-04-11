@@ -72,7 +72,6 @@ func AttributeXmlOpen(f string) {
 	var attributesFile Attributes
 	xml.Unmarshal(byteValue, &attributesFile)
 	IterateAttributesXML(attributesFile)
-
 }
 
 func IterateAttributesXML(attributeList Attributes) {

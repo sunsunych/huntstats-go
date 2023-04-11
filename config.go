@@ -9,7 +9,8 @@ import (
 
 type (
 	AttributesSettings struct {
-		Path string
+		Path     string
+		Filename string
 	}
 
 	configfile struct {

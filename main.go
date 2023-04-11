@@ -48,6 +48,10 @@ func onReady() {
 			}
 		}
 	}()
+
+	if verifyAttributesExist(attrPath, cfgFile.AttributesSettings.Filename) {
+		AttributeXmlOpen(attrPath + cfgFile.AttributesSettings.Filename)
+	}
 }
 
 func onExit() {
@@ -71,7 +75,7 @@ func getIcon(s string) []byte {
 func getAttributesFolder() string {
 	confFile := ReadConfig("config.toml")
 	directorySelectDialog := dialog.Directory()
-	if verifyAttributesExist(confFile.AttributesSettings.Path) {
+	if verifyAttributesExist(confFile.AttributesSettings.Path, confFile.AttributesSettings.Filename) {
 		directorySelectDialog.SetStartDir(confFile.AttributesSettings.Path)
 	} else {
 		directorySelectDialog.SetStartDir(GetRegSteamFolderValue())
@@ -84,10 +88,10 @@ func getAttributesFolder() string {
 		confFile.AttributesSettings.Path = directory
 		confFile.WriteConfigParamIntoFile("config.toml")
 	}
-	IterateAttributesXML()
+	return directory
 }
 
-func setAttributesFolderByBrowse() string {
+func setAttributesFolderByBrowse() {
 	confFile := ReadConfig("config.toml")
 	directorySelectDialog := dialog.Directory()
 	directorySelectDialog.SetStartDir(confFile.AttributesSettings.Path)
@@ -108,8 +112,8 @@ func check(err error) {
 	}
 }
 
-func verifyAttributesExist(folderpath string) bool {
-	fullPath := folderpath + "\\attributes.xml"
+func verifyAttributesExist(folderpath string, filename string) bool {
+	fullPath := folderpath + filename
 	_, err := os.Stat(fullPath)
 	return !os.IsNotExist(err)
 }
