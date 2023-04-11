@@ -1,20 +1,13 @@
 package main
 
 import (
-	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
-	"strconv"
-	"time"
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/getlantern/systray"
 	"github.com/sqweek/dialog"
-)
-
-var (
-	timezone string
 )
 
 func main() {
@@ -29,13 +22,13 @@ func onReady() {
 	mBrowseAttributes := systray.AddMenuItem("Set Attributes folder", "Set Attributes folder")
 	systray.AddSeparator()
 	mQuit := systray.AddMenuItem("Quit", "Quits this app")
-	go func() {
-		for {
-			// systray.SetTitle(getClockTime(timezone))
-			systray.SetTooltip("AttrPath:\n" + attrPath + "\n\n ---")
-			time.Sleep(10 * time.Second)
-		}
-	}()
+
+	// go func() {
+	// 	for {
+	// 		systray.SetTooltip("AttrPath:\n" + attrPath + "\n\n ---")
+	// 		time.Sleep(10 * time.Second)
+	// 	}
+	// }()
 
 	go func() {
 		for {
@@ -50,7 +43,10 @@ func onReady() {
 	}()
 
 	if verifyAttributesExist(attrPath, cfgFile.AttributesSettings.Filename) {
+		log.Printf("Attributes path: %s%s", attrPath, cfgFile.AttributesSettings.Filename)
 		AttributeXmlOpen(attrPath + cfgFile.AttributesSettings.Filename)
+	} else {
+		setAttributesFolderByBrowse()
 	}
 }
 
@@ -58,16 +54,10 @@ func onExit() {
 	// Cleaning stuff here.
 }
 
-// ItoaTwoDigits time.Clock returns one digit on values, so we make sure to convert to two digits
-func ItoaTwoDigits(i int) string {
-	b := "0" + strconv.Itoa(i)
-	return b[len(b)-2:]
-}
-
 func getIcon(s string) []byte {
 	b, err := ioutil.ReadFile(s)
 	if err != nil {
-		fmt.Print(err)
+		log.Print(err)
 	}
 	return b
 }
@@ -103,7 +93,6 @@ func setAttributesFolderByBrowse() {
 		confFile.AttributesSettings.Path = directory
 		confFile.WriteConfigParamIntoFile("config.toml")
 	}
-	// IterateAttributesXML()
 }
 
 func check(err error) {
@@ -113,9 +102,14 @@ func check(err error) {
 }
 
 func verifyAttributesExist(folderpath string, filename string) bool {
+	log.Printf("Check attributes at %s%s", folderpath, filename)
 	fullPath := folderpath + filename
 	_, err := os.Stat(fullPath)
-	return !os.IsNotExist(err)
+	if os.IsNotExist(err) {
+		log.Printf("File %s is not found at %s", filename, folderpath)
+		return false
+	}
+	return true
 }
 
 func fileWatcher(filepath string) {

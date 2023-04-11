@@ -98,17 +98,20 @@ func (a *Attributes) getTeamsAmount() int {
 func (a *Attributes) getTeamsDetails(teamsQty int) *[]Team {
 	Teams := new([]Team)
 	teamData := new(Team)
-	lastTeamID := 0
+	lastTeamID := -1
 	teamData.TeamID = lastTeamID
 	for _, attrRecord := range a.Attr {
 		if strings.HasPrefix(attrRecord.NameKey, "MissionBagTeam_") {
-			teamIndex, success := getTeamIndexFromKey(attrRecord.NameKey)
-			if lastTeamID != teamIndex && success {
+			teamIndex, _ := getTeamIndexFromKey(attrRecord.NameKey)
+			if (lastTeamID != teamIndex) && (teamIndex < teamsQty) {
+				log.Printf("lastTeamID: %d & teamIndex: %d", lastTeamID, teamIndex)
 				teamData := new(Team)
+				lastTeamID = teamIndex
 				teamData.TeamID = teamIndex
-				log.Printf("Start new team ID: %d")
-			} else {
-				//
+				log.Printf("Start new team ID: %d", teamData.TeamID)
+			}
+			if teamIndex < teamsQty {
+				log.Printf("Assign new value ID for key: %v %v", attrRecord.NameValue, attrRecord.NameKey)
 			}
 			// log.Printf("TeamID: %d | Parameter: %s | Value: %s \n", teamIndex, AttrName, AttrValue)
 		}
