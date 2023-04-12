@@ -66,7 +66,8 @@ func IterateAttributesXML(attributeList Attributes) {
 	MatchData.TeamsQty = attributeList.getTeamsAmount()
 	log.Printf("Total teams in match: %d\n", MatchData.TeamsQty)
 	TeamsList := attributeList.getTeamsDetails(MatchData.TeamsQty)
-	log.Printf("Teams list: %v", TeamsList)
+	MatchData.Teams = TeamsList
+	log.Printf("MatchData: %v", MatchData)
 }
 
 // Attributes methods
@@ -82,9 +83,9 @@ func (a *Attributes) getTeamsAmount() int {
 }
 
 // Get details for each team
-func (a *Attributes) getTeamsDetails(teamsQty int) *[]Team {
-	Teams := new([]Team)
-	teamData := new(Team)
+func (a *Attributes) getTeamsDetails(teamsQty int) []Team {
+	Teams := []Team{}
+	teamData := Team{}
 	teamData.TeamID = 0
 
 	for _, attrRecord := range a.Attr {
@@ -92,21 +93,19 @@ func (a *Attributes) getTeamsDetails(teamsQty int) *[]Team {
 			teamIndex, _ := getTeamIndexFromKey(attrRecord.NameKey)
 			if (teamData.TeamID != teamIndex) && (teamIndex <= teamsQty) {
 				//We need to save team into teams slice, before assigning new teamIndex
-				log.Printf("Save Team %d with data: %v", teamData.TeamID, teamData)
-				// log.Printf("lastTeamID: %d & teamIndex: %d", teamData.TeamID, teamIndex)
+				Teams = append(Teams, teamData)
+				// log.Printf("Save Team %d with data: %v", teamData.TeamID, teamData)
 				teamData.TeamID = teamIndex
-				// log.Printf("Start new team ID: %d", teamData.TeamID)
 			}
 			if (teamData.TeamID < teamsQty) && (teamData.TeamID == teamIndex) {
 				AttrName, AttrValue := getTeamAttributeAndValue(attrRecord)
 
-				v := reflect.ValueOf(teamData)
+				v := reflect.ValueOf(&teamData)
 
 				for i := 0; i < reflect.Indirect(v).NumField(); i++ {
 					field := reflect.Indirect(v).Field(i)
 					tag := reflect.Indirect(v).Type().Field(i).Tag.Get("hunttag")
 					if (tag == AttrName) && (tag != "") {
-						// log.Printf("Assign Tag: %s to Attribute: %s | With value: %v | Type: %s", tag, AttrName, AttrValue, reflect.Indirect(v).Field(i).Type().Name())
 						switch reflect.Indirect(v).Field(i).Type().Name() {
 						case "int":
 							convertedValue, _ := strconv.Atoi(AttrValue)
