@@ -31,19 +31,6 @@ type Match struct {
 	Teams    []Team
 }
 
-func (mt *Match) GetIndexByTeamID(tid int) int {
-	for ti, teamRecord := range mt.Teams {
-		v := reflect.ValueOf(teamRecord)
-		for i := 0; i < v.NumField(); i++ {
-			tag := v.Type().Field(i).Tag.Get("hunttag")
-			if tag == "_id" && mt.Teams[ti].TeamID == tid {
-				return ti
-			}
-		}
-	}
-	return 0
-}
-
 type Team struct {
 	TeamID     int `hunttag:"_id"`
 	PlayersQty int `hunttag:"numplayers"`
@@ -98,22 +85,41 @@ func (a *Attributes) getTeamsAmount() int {
 func (a *Attributes) getTeamsDetails(teamsQty int) *[]Team {
 	Teams := new([]Team)
 	teamData := new(Team)
-	lastTeamID := -1
-	teamData.TeamID = lastTeamID
+	teamData.TeamID = 0
+
 	for _, attrRecord := range a.Attr {
 		if strings.HasPrefix(attrRecord.NameKey, "MissionBagTeam_") {
 			teamIndex, _ := getTeamIndexFromKey(attrRecord.NameKey)
-			if (lastTeamID != teamIndex) && (teamIndex < teamsQty) {
-				log.Printf("lastTeamID: %d & teamIndex: %d", lastTeamID, teamIndex)
-				teamData := new(Team)
-				lastTeamID = teamIndex
+			if (teamData.TeamID != teamIndex) && (teamIndex <= teamsQty) {
+				//We need to save team into teams slice, before assigning new teamIndex
+				log.Printf("Save Team %d with data: %v", teamData.TeamID, teamData)
+				// log.Printf("lastTeamID: %d & teamIndex: %d", teamData.TeamID, teamIndex)
 				teamData.TeamID = teamIndex
-				log.Printf("Start new team ID: %d", teamData.TeamID)
+				// log.Printf("Start new team ID: %d", teamData.TeamID)
 			}
-			if teamIndex < teamsQty {
-				log.Printf("Assign new value ID for key: %v %v", attrRecord.NameValue, attrRecord.NameKey)
+			if (teamData.TeamID < teamsQty) && (teamData.TeamID == teamIndex) {
+				AttrName, AttrValue := getTeamAttributeAndValue(attrRecord)
+
+				v := reflect.ValueOf(teamData)
+
+				for i := 0; i < reflect.Indirect(v).NumField(); i++ {
+					field := reflect.Indirect(v).Field(i)
+					tag := reflect.Indirect(v).Type().Field(i).Tag.Get("hunttag")
+					if (tag == AttrName) && (tag != "") {
+						// log.Printf("Assign Tag: %s to Attribute: %s | With value: %v | Type: %s", tag, AttrName, AttrValue, reflect.Indirect(v).Field(i).Type().Name())
+						switch reflect.Indirect(v).Field(i).Type().Name() {
+						case "int":
+							convertedValue, _ := strconv.Atoi(AttrValue)
+							field.Set(reflect.ValueOf(convertedValue))
+						case "bool":
+							convertedValue, _ := strconv.ParseBool(AttrValue)
+							field.Set(reflect.ValueOf(convertedValue))
+						default:
+							field.Set(reflect.ValueOf(AttrValue))
+						}
+					}
+				}
 			}
-			// log.Printf("TeamID: %d | Parameter: %s | Value: %s \n", teamIndex, AttrName, AttrValue)
 		}
 	}
 	return Teams
@@ -123,7 +129,7 @@ func (a *Attributes) getTeamsDetails(teamsQty int) *[]Team {
 // Get Team Index From Key
 func getTeamIndexFromKey(key string) (int, bool) {
 	KeySlice := strings.Split(key, "_")
-	if len(KeySlice) > 2 {
+	if len(KeySlice) >= 2 {
 		teamIndex, _ := strconv.Atoi(KeySlice[1])
 		return teamIndex, true
 	} else {
