@@ -8,6 +8,8 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+
+	"github.com/speps/go-hashids/v2"
 )
 
 // XML Attribute list - v37
@@ -26,7 +28,7 @@ type Attr struct {
 
 // Match details struct - v1
 type Match struct {
-	MatchID  uint64
+	MatchKey string
 	TeamsQty int
 	Teams    []Team
 }
@@ -66,16 +68,25 @@ func AttributeXmlOpen(f string) {
 func IterateAttributesXML(attributeList Attributes) {
 	MatchData := new(Match)
 	MatchData.TeamsQty = attributeList.getTeamsAmount()
-	log.Printf("Total teams in match: %d\n", MatchData.TeamsQty)
 	TeamsList := attributeList.getTeamsDetails(MatchData.TeamsQty)
 	MatchData.Teams = TeamsList
-	log.Printf("MatchData: %v", MatchData)
-	for k, v := range MatchData.Teams {
+	for _, v := range MatchData.Teams {
 		teamIndex := v.TeamID
 		playersQty := v.PlayersQty
 		playersSlice := attributeList.getPlayersDetailsForTeam(teamIndex, playersQty)
-		log.Printf("players [%d]: %v", k, playersSlice)
+		MatchData.Teams[teamIndex].Players = playersSlice
 	}
+	log.Printf("[MY TEAM]")
+	for _, teamSlice := range MatchData.Teams {
+		if teamSlice.IsOwn == true {
+			for _, teamPlayer := range teamSlice.Players {
+				log.Printf("Player: %s | MMR: %d", teamPlayer.PlayerName, teamPlayer.PlayerMMR)
+			}
+		}
+	}
+	MatchData.MatchKey = hashMatchKey(MatchData.Teams)
+	// b, _ := json.Marshal(&MatchData)
+	// log.Printf("MatchData: %s", b)
 }
 
 // Attributes methods
@@ -102,7 +113,6 @@ func (a *Attributes) getTeamsDetails(teamsQty int) []Team {
 			if (teamData.TeamID != teamIndex) && (teamIndex <= teamsQty) {
 				//We need to save team into teams slice, before assigning new teamIndex
 				Teams = append(Teams, teamData)
-				// log.Printf("Save Team %d with data: %v", teamData.TeamID, teamData)
 				teamData.TeamID = teamIndex
 			}
 			if (teamData.TeamID < teamsQty) && (teamData.TeamID == teamIndex) {
@@ -135,50 +145,60 @@ func (a *Attributes) getTeamsDetails(teamsQty int) []Team {
 // Get details for each player
 func (a *Attributes) getPlayersDetailsForTeam(teamIndex int, playersQty int) []Player {
 	Players := []Player{}
-	// playerData := Player{}
+	playerData := Player{}
 	playerIter := 0
 	teamIter := 0
-	log.Printf("Search for Team %d | %d player(s)", teamIndex, playersQty)
 
 	for _, attrRecord := range a.Attr {
 		if strings.HasPrefix(attrRecord.NameKey, "MissionBagPlayer_") {
 			teamIdx, playerIdx := getPlayerTeamAndIndexFromKey(attrRecord.NameKey)
 			if teamIdx >= 0 || playerIdx >= 0 {
-				if teamIdx == teamIndex {
-					if ((playerIter != playerIdx) || (teamIter != teamIndex)) && (playerIdx < playersQty) {
-						//We need to save team into teams slice, before assigning new teamIndex
-						// Teams = append(Teams, teamData)
-						// log.Printf("[BEFORE CHANGE] PlayerIter: %d | TeamIter: %d || playerIndex: %d | teamIndex: %d", playerIter, teamIter, playerIdx, teamIdx)
-						playerIter = playerIdx
-						teamIter = teamIdx
-						log.Printf("[AFTER  CHANGE] PlayerIter: %d | TeamIter: %d || playerIndex: %d | teamIndex: %d", playerIter, teamIter, playerIdx, teamIdx)
-						// teamData.TeamID = teamIndex
+				if ((playerIter != playerIdx) && (teamIter == teamIndex)) && (playerIter < playersQty) {
+					//We need to save team into teams slice, before assigning new teamIndex
+					if playerData.ProfileID != 0 {
+						Players = append(Players, playerData)
 					}
-					// if (teamData.TeamID < teamsQty) && (teamData.TeamID == teamIndex) {
-					// 	AttrName, AttrValue := getTeamAttributeAndValue(attrRecord)
+					playerIter = playerIdx
+					teamIter = teamIdx
+					playerData = Player{}
+				}
 
-					// 	v := reflect.ValueOf(&teamData)
+				if (teamIter != teamIdx) && (teamIdx == teamIndex) {
+					//We need to save team into teams slice, before assigning new teamIndex
+					if playerData.ProfileID != 0 {
+						Players = append(Players, playerData)
+					}
+					playerIter = playerIdx
+					teamIter = teamIdx
+					playerData = Player{}
+				}
+				if (playerIter <= playersQty) && (teamIter == teamIndex) {
+					AttrName, AttrValue := getPlayerAttributeAndValue(attrRecord)
 
-					// 	for i := 0; i < reflect.Indirect(v).NumField(); i++ {
-					// 		field := reflect.Indirect(v).Field(i)
-					// 		tag := reflect.Indirect(v).Type().Field(i).Tag.Get("hunttag")
-					// 		if (tag == AttrName) && (tag != "") {
-					// 			switch reflect.Indirect(v).Field(i).Type().Name() {
-					// 			case "int":
-					// 				convertedValue, _ := strconv.Atoi(AttrValue)
-					// 				field.Set(reflect.ValueOf(convertedValue))
-					// 			case "bool":
-					// 				convertedValue, _ := strconv.ParseBool(AttrValue)
-					// 				field.Set(reflect.ValueOf(convertedValue))
-					// 			default:
-					// 				field.Set(reflect.ValueOf(AttrValue))
-					// 			}
-					// 		}
-					// 	}
-					// }
+					v := reflect.ValueOf(&playerData)
+
+					for i := 0; i < reflect.Indirect(v).NumField(); i++ {
+						field := reflect.Indirect(v).Field(i)
+						tag := reflect.Indirect(v).Type().Field(i).Tag.Get("hunttag")
+						if (tag == AttrName) && (tag != "") {
+							switch reflect.Indirect(v).Field(i).Type().Name() {
+							case "int":
+								convertedValue, _ := strconv.Atoi(AttrValue)
+								field.Set(reflect.ValueOf(convertedValue))
+							case "bool":
+								convertedValue, _ := strconv.ParseBool(AttrValue)
+								field.Set(reflect.ValueOf(convertedValue))
+							default:
+								field.Set(reflect.ValueOf(AttrValue))
+							}
+						}
+					}
 				}
 			}
 		}
+	}
+	for i, plr := range Players {
+		log.Printf("Team [%d] | Player [%d]: %s - %d MMR", teamIndex, i, plr.PlayerName, plr.PlayerMMR)
 	}
 	return Players
 }
@@ -219,18 +239,30 @@ func getTeamAttributeAndValue(rec Attr) (string, string) {
 	}
 }
 
-// Search in array by _id tag
-func tagTest(t []Team) {
-	// ValueOf returns a Value representing the run-time data
-	for ti, teamRecord := range t {
-		v := reflect.ValueOf(teamRecord)
+// Get Team Attribute From Key
+func getPlayerAttributeAndValue(rec Attr) (string, string) {
+	KeySlice := strings.Split(rec.NameKey, "_")
+	if len(KeySlice) > 3 {
+		AttrName := KeySlice[3]
+		AttrValue := rec.NameValue
+		return AttrName, AttrValue
+	} else {
+		return "", ""
+	}
+}
 
-		for i := 0; i < v.NumField(); i++ {
-			// Get the field tag value
-			tag := v.Type().Field(i).Tag.Get("hunttag")
-
-			log.Printf("Field: %s | Tag: %s | Type: %s", v.Type().Field(i).Name, tag, v.Field(i).Type())
-			log.Printf("Field index: %d | TeamID: %d", ti, t[ti].TeamID)
+func hashMatchKey(teams []Team) string {
+	profiles := []int{}
+	for _, team := range teams {
+		for _, player := range team.Players {
+			profiles = append(profiles, int(player.ProfileID))
 		}
 	}
+	hd := hashids.NewData()
+	hd.Salt = "hunt"
+	hd.MinLength = 64
+	hd.Alphabet = "0123456789abcdefghijklmnopqrstuvwxyz"
+	h, _ := hashids.NewWithData(hd)
+	e, _ := h.Encode(profiles)
+	return e
 }

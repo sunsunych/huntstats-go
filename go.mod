@@ -7,6 +7,7 @@ require (
 	github.com/fsnotify/fsnotify v1.6.0
 	github.com/getlantern/systray v1.2.1
 	github.com/pelletier/go-toml/v2 v2.0.7
+	github.com/speps/go-hashids/v2 v2.0.1
 	github.com/sqweek/dialog v0.0.0-20220809060634-e981b270ebbf
 	golang.org/x/sys v0.0.0-20220908164124-27713097b956
 )

@@ -13,8 +13,13 @@ type (
 		Filename string
 	}
 
+	Activity struct {
+		LastSavedKeyHash string
+	}
+
 	configfile struct {
 		AttributesSettings AttributesSettings
+		Activity           Activity
 	}
 )
 
