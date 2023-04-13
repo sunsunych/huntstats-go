@@ -31,6 +31,7 @@ type Match struct {
 	Teams    []Team
 }
 
+// Prefix MissionBagTeam
 type Team struct {
 	TeamID     int `hunttag:"_id"`
 	PlayersQty int `hunttag:"numplayers"`
@@ -39,11 +40,12 @@ type Team struct {
 	IsOwn      bool `hunttag:"ownteam"`
 }
 
+// Prefix MissionBagPlayer
 type Player struct {
-	ProfileID  int
-	PlayerName string
-	PlayerMMR  int
-	IsPartner  bool
+	ProfileID  int    `hunttag:"profileid"`
+	PlayerName string `hunttag:"blood"`
+	PlayerMMR  int    `hunttag:"mmr"`
+	IsPartner  bool   `hunttag:"ispartner"`
 }
 
 func AttributeXmlOpen(f string) {
@@ -68,6 +70,12 @@ func IterateAttributesXML(attributeList Attributes) {
 	TeamsList := attributeList.getTeamsDetails(MatchData.TeamsQty)
 	MatchData.Teams = TeamsList
 	log.Printf("MatchData: %v", MatchData)
+	for k, v := range MatchData.Teams {
+		teamIndex := v.TeamID
+		playersQty := v.PlayersQty
+		playersSlice := attributeList.getPlayersDetailsForTeam(teamIndex, playersQty)
+		log.Printf("players [%d]: %v", k, playersSlice)
+	}
 }
 
 // Attributes methods
@@ -124,6 +132,57 @@ func (a *Attributes) getTeamsDetails(teamsQty int) []Team {
 	return Teams
 }
 
+// Get details for each player
+func (a *Attributes) getPlayersDetailsForTeam(teamIndex int, playersQty int) []Player {
+	Players := []Player{}
+	// playerData := Player{}
+	playerIter := 0
+	teamIter := 0
+	log.Printf("Search for Team %d | %d player(s)", teamIndex, playersQty)
+
+	for _, attrRecord := range a.Attr {
+		if strings.HasPrefix(attrRecord.NameKey, "MissionBagPlayer_") {
+			teamIdx, playerIdx := getPlayerTeamAndIndexFromKey(attrRecord.NameKey)
+			if teamIdx >= 0 || playerIdx >= 0 {
+				if teamIdx == teamIndex {
+					if ((playerIter != playerIdx) || (teamIter != teamIndex)) && (playerIdx < playersQty) {
+						//We need to save team into teams slice, before assigning new teamIndex
+						// Teams = append(Teams, teamData)
+						// log.Printf("[BEFORE CHANGE] PlayerIter: %d | TeamIter: %d || playerIndex: %d | teamIndex: %d", playerIter, teamIter, playerIdx, teamIdx)
+						playerIter = playerIdx
+						teamIter = teamIdx
+						log.Printf("[AFTER  CHANGE] PlayerIter: %d | TeamIter: %d || playerIndex: %d | teamIndex: %d", playerIter, teamIter, playerIdx, teamIdx)
+						// teamData.TeamID = teamIndex
+					}
+					// if (teamData.TeamID < teamsQty) && (teamData.TeamID == teamIndex) {
+					// 	AttrName, AttrValue := getTeamAttributeAndValue(attrRecord)
+
+					// 	v := reflect.ValueOf(&teamData)
+
+					// 	for i := 0; i < reflect.Indirect(v).NumField(); i++ {
+					// 		field := reflect.Indirect(v).Field(i)
+					// 		tag := reflect.Indirect(v).Type().Field(i).Tag.Get("hunttag")
+					// 		if (tag == AttrName) && (tag != "") {
+					// 			switch reflect.Indirect(v).Field(i).Type().Name() {
+					// 			case "int":
+					// 				convertedValue, _ := strconv.Atoi(AttrValue)
+					// 				field.Set(reflect.ValueOf(convertedValue))
+					// 			case "bool":
+					// 				convertedValue, _ := strconv.ParseBool(AttrValue)
+					// 				field.Set(reflect.ValueOf(convertedValue))
+					// 			default:
+					// 				field.Set(reflect.ValueOf(AttrValue))
+					// 			}
+					// 		}
+					// 	}
+					// }
+				}
+			}
+		}
+	}
+	return Players
+}
+
 // ITERATOR HELPERS
 // Get Team Index From Key
 func getTeamIndexFromKey(key string) (int, bool) {
@@ -133,6 +192,18 @@ func getTeamIndexFromKey(key string) (int, bool) {
 		return teamIndex, true
 	} else {
 		return 0, false
+	}
+}
+
+// Get player personal index and team index from key
+func getPlayerTeamAndIndexFromKey(key string) (int, int) {
+	KeySlice := strings.Split(key, "_")
+	if len(KeySlice) >= 2 {
+		teamIndex, _ := strconv.Atoi(KeySlice[1])
+		playerIndex, _ := strconv.Atoi(KeySlice[2])
+		return teamIndex, playerIndex
+	} else {
+		return -1, -1
 	}
 }
 
