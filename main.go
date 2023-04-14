@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"io/ioutil"
 	"log"
 	"math"
@@ -10,6 +11,7 @@ import (
 	"time"
 
 	"github.com/fsnotify/fsnotify"
+	"github.com/gen2brain/beeep"
 	"github.com/getlantern/systray"
 	"github.com/sqweek/dialog"
 )
@@ -19,7 +21,7 @@ func main() {
 }
 
 func onReady() {
-	systray.SetIcon(getIcon("assets/statsicon.ico"))
+	systray.SetIcon(getIcon("assets/icon_32.ico"))
 	cfgFile := ReadConfig("config.toml")
 	attrPath := cfgFile.AttributesSettings.Path
 	mBrowseAttributes := systray.AddMenuItem("Set Attributes folder", "Set Attributes folder")
@@ -43,6 +45,7 @@ func onReady() {
 	} else {
 		setAttributesFolderByBrowse()
 	}
+
 	watchPath := attrPath + cfgFile.AttributesSettings.Filename
 	dedup(watchPath)
 }
@@ -151,7 +154,12 @@ func dedupLoop(w *fsnotify.Watcher) {
 			readpath := strings.Split(e.String(), "\"")
 			if len(readpath) > 0 {
 				log.Printf("Attr UPD path: %s", readpath[1])
-				AttributeXmlOpen(readpath[1])
+				matchdata := AttributeXmlOpen(readpath[1])
+				msg := buildNotificationMessageBody(matchdata)
+				err := beeep.Notify("Lates match result", msg, "assets/icon.png")
+				if err != nil {
+					// panic(err)
+				}
 			}
 
 			// Don't need to remove the timer if you don't have a lot of files.
@@ -200,4 +208,18 @@ func dedupLoop(w *fsnotify.Watcher) {
 			t.Reset(waitFor)
 		}
 	}
+}
+
+func buildNotificationMessageBody(m Match) string {
+	msg := ""
+	// log.Printf("[MY TEAM]")
+	for _, teamSlice := range m.Teams {
+		if teamSlice.IsOwn == true {
+			for _, teamPlayer := range teamSlice.Players {
+				msgline := fmt.Sprintf("Player: %s | MMR: %d \n", teamPlayer.PlayerName, teamPlayer.PlayerMMR)
+				msg = msg + msgline
+			}
+		}
+	}
+	return msg
 }

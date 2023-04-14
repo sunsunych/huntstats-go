@@ -50,7 +50,7 @@ type Player struct {
 	IsPartner  bool   `hunttag:"ispartner"`
 }
 
-func AttributeXmlOpen(f string) {
+func AttributeXmlOpen(f string) Match {
 	xmlFile, err := os.Open(f)
 	if err != nil {
 		log.Println(err)
@@ -62,10 +62,11 @@ func AttributeXmlOpen(f string) {
 	// Attributes array
 	var attributesFile Attributes
 	xml.Unmarshal(byteValue, &attributesFile)
-	IterateAttributesXML(attributesFile)
+	matchdata := IterateAttributesXML(attributesFile)
+	return matchdata
 }
 
-func IterateAttributesXML(attributeList Attributes) {
+func IterateAttributesXML(attributeList Attributes) Match {
 	MatchData := new(Match)
 	MatchData.TeamsQty = attributeList.getTeamsAmount()
 	TeamsList := attributeList.getTeamsDetails(MatchData.TeamsQty)
@@ -76,15 +77,8 @@ func IterateAttributesXML(attributeList Attributes) {
 		playersSlice := attributeList.getPlayersDetailsForTeam(teamIndex, playersQty)
 		MatchData.Teams[teamIndex].Players = playersSlice
 	}
-	log.Printf("[MY TEAM]")
-	for _, teamSlice := range MatchData.Teams {
-		if teamSlice.IsOwn == true {
-			for _, teamPlayer := range teamSlice.Players {
-				log.Printf("Player: %s | MMR: %d", teamPlayer.PlayerName, teamPlayer.PlayerMMR)
-			}
-		}
-	}
 	MatchData.MatchKey = hashMatchKey(MatchData.Teams)
+	return *MatchData
 	// b, _ := json.Marshal(&MatchData)
 	// log.Printf("MatchData: %s", b)
 }
