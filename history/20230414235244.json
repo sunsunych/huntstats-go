@@ -1,0 +1,167 @@
+{
+    "MatchKey": "do9xrnr2phkngxrdyy18lxa8db8id776v6gkubn9o2g4ou9k78b99yced4kv23g0ybeoxomrhlxe87dr9f87o6kv55ubjvm9npp",
+    "TeamsQty": 11,
+    "Teams": [
+        {
+            "TeamID": 0,
+            "PlayersQty": 1,
+            "TeamMMR": 2268,
+            "Players": [
+                {
+                    "ProfileID": 34359775278,
+                    "PlayerName": "zaoknom",
+                    "PlayerMMR": 2443,
+                    "IsPartner": false
+                }
+            ],
+            "IsOwn": false
+        },
+        {
+            "TeamID": 1,
+            "PlayersQty": 1,
+            "TeamMMR": 2268,
+            "Players": [
+                {
+                    "ProfileID": 77309648189,
+                    "PlayerName": "mshr is love",
+                    "PlayerMMR": 2707,
+                    "IsPartner": false
+                }
+            ],
+            "IsOwn": false
+        },
+        {
+            "TeamID": 10,
+            "PlayersQty": 1,
+            "TeamMMR": 2383,
+            "Players": [
+                {
+                    "ProfileID": 8590029961,
+                    "PlayerName": "RisingGear77",
+                    "PlayerMMR": 2447,
+                    "IsPartner": false
+                }
+            ],
+            "IsOwn": false
+        },
+        {
+            "TeamID": 11,
+            "PlayersQty": 1,
+            "TeamMMR": 2383,
+            "Players": [
+                {
+                    "ProfileID": 55834722896,
+                    "PlayerName": "SunSunych",
+                    "PlayerMMR": 2370,
+                    "IsPartner": false
+                }
+            ],
+            "IsOwn": false
+        },
+        {
+            "TeamID": 1,
+            "PlayersQty": 1,
+            "TeamMMR": 2532,
+            "Players": [
+                {
+                    "ProfileID": 21474962807,
+                    "PlayerName": "007Nobody",
+                    "PlayerMMR": 2331,
+                    "IsPartner": false
+                }
+            ],
+            "IsOwn": false
+        },
+        {
+            "TeamID": 2,
+            "PlayersQty": 1,
+            "TeamMMR": 2272,
+            "Players": [
+                {
+                    "ProfileID": 17179971345,
+                    "PlayerName": "ChemoFatzke",
+                    "PlayerMMR": 2713,
+                    "IsPartner": false
+                }
+            ],
+            "IsOwn": false
+        },
+        {
+            "TeamID": 3,
+            "PlayersQty": 1,
+            "TeamMMR": 2195,
+            "Players": [
+                {
+                    "ProfileID": 73014642923,
+                    "PlayerName": "french ecstasy",
+                    "PlayerMMR": 2765,
+                    "IsPartner": false
+                }
+            ],
+            "IsOwn": true
+        },
+        {
+            "TeamID": 4,
+            "PlayersQty": 1,
+            "TeamMMR": 2156,
+            "Players": [
+                {
+                    "ProfileID": 64424524217,
+                    "PlayerName": "!WomeN_REspecteR 69!",
+                    "PlayerMMR": 2708,
+                    "IsPartner": false
+                }
+            ],
+            "IsOwn": false
+        },
+        {
+            "TeamID": 5,
+            "PlayersQty": 1,
+            "TeamMMR": 2538,
+            "Players": [
+                {
+                    "ProfileID": 34359774122,
+                    "PlayerName": "Wunjox",
+                    "PlayerMMR": 2645,
+                    "IsPartner": false
+                }
+            ],
+            "IsOwn": false
+        },
+        {
+            "TeamID": 6,
+            "PlayersQty": 1,
+            "TeamMMR": 2590,
+            "Players": null,
+            "IsOwn": false
+        },
+        {
+            "TeamID": 7,
+            "PlayersQty": 1,
+            "TeamMMR": 2533,
+            "Players": [
+                {
+                    "ProfileID": 77309648189,
+                    "PlayerName": "mshr is love",
+                    "PlayerMMR": 2707,
+                    "IsPartner": false
+                }
+            ],
+            "IsOwn": false
+        },
+        {
+            "TeamID": 8,
+            "PlayersQty": 1,
+            "TeamMMR": 2470,
+            "Players": [
+                {
+                    "ProfileID": 77309648189,
+                    "PlayerName": "mshr is love",
+                    "PlayerMMR": 2707,
+                    "IsPartner": false
+                }
+            ],
+            "IsOwn": false
+        }
+    ]
+}

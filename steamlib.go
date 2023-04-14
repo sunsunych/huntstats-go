@@ -20,7 +20,7 @@ func FindAttributesFolder(steamappspath string) string {
 	libfolders := SearchHuntAppFolder(steamappspath)
 	appspath := ""
 	temppath := ""
-	log.Printf("libfolders length: %v", reflect.ValueOf(libfolders).Len())
+	// log.Printf("libfolders length: %v", reflect.ValueOf(libfolders).Len())
 
 	if reflect.ValueOf(libfolders).Len() == 0 {
 		appspath = "C:\\"

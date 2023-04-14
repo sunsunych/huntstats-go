@@ -1,17 +1,10 @@
 package main
 
 import (
-	"fmt"
 	"io/ioutil"
 	"log"
-	"math"
 	"os"
-	"strings"
-	"sync"
-	"time"
 
-	"github.com/fsnotify/fsnotify"
-	"github.com/gen2brain/beeep"
 	"github.com/getlantern/systray"
 	"github.com/sqweek/dialog"
 )
@@ -32,7 +25,7 @@ func onReady() {
 		for {
 			select {
 			case <-mBrowseAttributes.ClickedCh:
-				setAttributesFolderByBrowse()
+				getAttributesFolder()
 			case <-mQuit.ClickedCh:
 				systray.Quit()
 				return
@@ -43,9 +36,9 @@ func onReady() {
 	if verifyAttributesExist(attrPath, cfgFile.AttributesSettings.Filename) {
 		AttributeXmlOpen(attrPath + cfgFile.AttributesSettings.Filename)
 	} else {
-		setAttributesFolderByBrowse()
+		getAttributesFolder()
 	}
-
+	checkUpdatedAttributesFile(attrPath + cfgFile.AttributesSettings.Filename)
 	watchPath := attrPath + cfgFile.AttributesSettings.Filename
 	dedup(watchPath)
 }
@@ -65,39 +58,29 @@ func getIcon(s string) []byte {
 func getAttributesFolder() string {
 	confFile := ReadConfig("config.toml")
 	directorySelectDialog := dialog.Directory()
-	if verifyAttributesExist(confFile.AttributesSettings.Path, confFile.AttributesSettings.Filename) {
-		directorySelectDialog.SetStartDir(confFile.AttributesSettings.Path)
-	} else {
+	if !verifyAttributesExist(confFile.AttributesSettings.Path, confFile.AttributesSettings.Filename) {
 		directorySelectDialog.SetStartDir(GetRegSteamFolderValue())
 	}
 	directory, err := directorySelectDialog.Title("Find folder with attributes XML files").Browse()
+	log.Printf("Selected folder: %s", directory)
 	if err != nil {
-		// fmt.Println("Error:", err)
+		log.Println("Config set error:", err)
 	} else {
-		// fileInfo(confFile.AttributesSettings.Path + "\\attributes.xml")
-		confFile.AttributesSettings.Path = directory
-		confFile.WriteConfigParamIntoFile("config.toml")
+		setAttributesFolderByBrowse(directory)
+		// confFile.WriteConfigParamIntoFile("config.toml")
 	}
 	return directory
 }
 
-func setAttributesFolderByBrowse() {
+func setAttributesFolderByBrowse(p string) {
 	confFile := ReadConfig("config.toml")
-	directorySelectDialog := dialog.Directory()
-	directorySelectDialog.SetStartDir(confFile.AttributesSettings.Path)
-	directory, err := directorySelectDialog.Title("Find folder with attributes XML files").Browse()
-	if err != nil {
-		// fmt.Println("Error:", err)
-	} else {
-		// fileInfo(confFile.AttributesSettings.Path + "\\attributes.xml")
-		confFile.AttributesSettings.Path = directory
-		confFile.WriteConfigParamIntoFile("config.toml")
-	}
+	confFile.AttributesSettings.Path = p
+	confFile.WriteConfigParamIntoFile("config.toml")
 }
 
 func check(err error) {
 	if err != nil {
-		log.Fatal(err)
+		log.Printf("Check error: %s", err)
 	}
 }
 
@@ -110,116 +93,4 @@ func verifyAttributesExist(folderpath string, filename string) bool {
 		return false
 	}
 	return true
-}
-
-func dedup(paths ...string) {
-	if len(paths) < 1 {
-		// exit("must specify at least one path to watch")
-	}
-
-	// Create a new watcher.
-	w, err := fsnotify.NewWatcher()
-	if err != nil {
-		// exit("creating a new watcher: %s", err)
-	}
-	defer w.Close()
-
-	// Start listening for events.
-	go dedupLoop(w)
-
-	// Add all paths from the commandline.
-	for _, p := range paths {
-		err = w.Add(p)
-		if err != nil {
-			// exit("%q: %s", p, err)
-		}
-	}
-
-	// log.Printf("ready; press ^C to exit")
-	<-make(chan struct{}) // Block forever
-}
-
-func dedupLoop(w *fsnotify.Watcher) {
-	var (
-		// Wait 100ms for new events; each new event resets the timer.
-		waitFor = 100 * time.Millisecond
-
-		// Keep track of the timers, as path → timer.
-		mu     sync.Mutex
-		timers = make(map[string]*time.Timer)
-
-		// Callback we run.
-		printEvent = func(e fsnotify.Event) {
-			// log.Printf(e.String())
-			readpath := strings.Split(e.String(), "\"")
-			if len(readpath) > 0 {
-				log.Printf("Attr UPD path: %s", readpath[1])
-				matchdata := AttributeXmlOpen(readpath[1])
-				msg := buildNotificationMessageBody(matchdata)
-				err := beeep.Notify("Lates match result", msg, "assets/icon.png")
-				if err != nil {
-					// panic(err)
-				}
-			}
-
-			// Don't need to remove the timer if you don't have a lot of files.
-			mu.Lock()
-			delete(timers, e.Name)
-			mu.Unlock()
-		}
-	)
-
-	for {
-		select {
-		// Read from Errors.
-		case err, ok := <-w.Errors:
-			if !ok { // Channel was closed (i.e. Watcher.Close() was called).
-				return
-			}
-			log.Printf("ERROR: %s", err)
-		// Read from Events.
-		case e, ok := <-w.Events:
-			if !ok { // Channel was closed (i.e. Watcher.Close() was called).
-				return
-			}
-
-			// We just want to watch for file creation, so ignore everything
-			// outside of Create and Write.
-			if !e.Has(fsnotify.Create) && !e.Has(fsnotify.Write) {
-				continue
-			}
-
-			// Get timer.
-			mu.Lock()
-			t, ok := timers[e.Name]
-			mu.Unlock()
-
-			// No timer yet, so create one.
-			if !ok {
-				t = time.AfterFunc(math.MaxInt64, func() { printEvent(e) })
-				t.Stop()
-
-				mu.Lock()
-				timers[e.Name] = t
-				mu.Unlock()
-			}
-
-			// Reset the timer for this path, so it will start from 100ms again.
-			t.Reset(waitFor)
-		}
-	}
-}
-
-func buildNotificationMessageBody(m Match) string {
-	msg := ""
-	// log.Printf("[MY TEAM]")
-	for _, teamSlice := range m.Teams {
-		if teamSlice.IsOwn == true {
-			for _, teamPlayer := range teamSlice.Players {
-				msgline := fmt.Sprintf("Player: %s | MMR: %d \n", teamPlayer.PlayerName, teamPlayer.PlayerMMR)
-				msg = msg + msgline
-			}
-		}
-	}
-	return msg
 }

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"os"
 
 	"github.com/pelletier/go-toml/v2"
@@ -36,18 +37,15 @@ func ReadConfig(filename string) configfile {
 func (cfg configfile) WriteConfigParamIntoFile(filename string) {
 	b, err := toml.Marshal(cfg)
 	check(err)
-	// open output file
 	fo, err := os.Create(filename)
 	check(err)
-	// close fo on exit and check for its returned error
 	defer func() {
 		if err := fo.Close(); err != nil {
-			panic(err)
+			log.Printf("Config save error: %s", err)
 		}
 	}()
-	// write a chunk
 	if _, err := fo.Write(b); err != nil {
-		panic(err)
+		log.Printf("Config save error: %s", err)
 	}
 }
 

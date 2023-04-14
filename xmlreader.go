@@ -191,9 +191,9 @@ func (a *Attributes) getPlayersDetailsForTeam(teamIndex int, playersQty int) []P
 			}
 		}
 	}
-	for i, plr := range Players {
-		log.Printf("Team [%d] | Player [%d]: %s - %d MMR", teamIndex, i, plr.PlayerName, plr.PlayerMMR)
-	}
+	// for i, plr := range Players {
+	// log.Printf("Team [%d] | Player [%d]: %s - %d MMR", teamIndex, i, plr.PlayerName, plr.PlayerMMR)
+	// }
 	return Players
 }
 
