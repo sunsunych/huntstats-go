@@ -28,9 +28,10 @@ type Attr struct {
 
 // Match details struct - v1
 type Match struct {
-	MatchKey string
-	TeamsQty int
-	Teams    []Team
+	MatchKey  string
+	TeamsQty  int
+	MatchType string
+	Teams     []Team
 }
 
 // Prefix MissionBagTeam
@@ -93,6 +94,28 @@ func (a *Attributes) getTeamsAmount() int {
 		}
 	}
 	return teamsInMatch
+}
+
+// Get teams amount in the match
+func (a *Attributes) getMatchTypeAmount() string {
+	// teamsInMatch := 1
+	isQuickPlay := false
+	isTutorial := false
+	for _, attrRecord := range a.Attr {
+		if attrRecord.NameKey == "MissionBagIsQuickPlay" {
+			isQuickPlay, _ = strconv.ParseBool(attrRecord.NameValue)
+		}
+		if attrRecord.NameKey == "MissionBagIsTutorial" {
+			isTutorial, _ = strconv.ParseBool(attrRecord.NameValue)
+		}
+	}
+	if isTutorial {
+		return "tutorial"
+	}
+	if isQuickPlay {
+		return "quickplay"
+	}
+	return "bountyhunt"
 }
 
 // Get details for each team
