@@ -45,7 +45,7 @@ type Team struct {
 
 // Prefix MissionBagPlayer
 type Player struct {
-	ProfileID  int    `hunttag:"profileid"`
+	ProfileID  uint64 `hunttag:"profileid"`
 	PlayerName string `hunttag:"blood"`
 	PlayerMMR  int    `hunttag:"mmr"`
 	IsPartner  bool   `hunttag:"ispartner"`
@@ -283,3 +283,13 @@ func hashMatchKey(teams []Team) string {
 	e, _ := h.Encode(profiles)
 	return e
 }
+
+//dummy regex for time extract
+// const str = '@ui_team_details_downed ~14:11~@ui_team_details_downed ~17:07';
+// const regex = /(\d{1,2}):(\d{2})~/g;
+// let match;
+// while (match = regex.exec(str)) {
+//   const minutes = match[1];
+//   const seconds = match[2];
+//   console.log(`Minutes: ${minutes}, Seconds: ${seconds}`);
+// }
