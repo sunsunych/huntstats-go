@@ -2,10 +2,13 @@ package main
 
 import (
 	"encoding/xml"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
 	"reflect"
+	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -32,6 +35,7 @@ type Match struct {
 	TeamsQty  int
 	MatchType string
 	Teams     []Team
+	Events    []MatchEvent
 }
 
 // Prefix MissionBagTeam
@@ -45,11 +49,24 @@ type Team struct {
 
 // Prefix MissionBagPlayer
 type Player struct {
-	ProfileID  uint64 `hunttag:"profileid"`
+	ProfileID  int    `hunttag:"profileid"`
 	PlayerName string `hunttag:"blood"`
 	PlayerMMR  int    `hunttag:"mmr"`
 	IsPartner  bool   `hunttag:"ispartner"`
 }
+
+type MatchEvent struct {
+	EventTime int
+	EventType string
+	ProfileID int
+}
+
+// Interface to sort events by tmie
+type ByTime []MatchEvent
+
+func (a ByTime) Len() int           { return len(a) }
+func (a ByTime) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a ByTime) Less(i, j int) bool { return a[i].EventTime < a[j].EventTime }
 
 func AttributeXmlOpen(f string) Match {
 	xmlFile, err := os.Open(f)
@@ -79,6 +96,9 @@ func IterateAttributesXML(attributeList Attributes) Match {
 		MatchData.Teams[teamIndex].Players = playersSlice
 	}
 	MatchData.MatchKey = hashMatchKey(MatchData.Teams)
+	Evts := attributeList.getEventsForMatch(MatchData)
+	sort.Sort(ByTime(Evts))
+	MatchData.Events = Evts
 	return *MatchData
 	// b, _ := json.Marshal(&MatchData)
 	// log.Printf("MatchData: %s", b)
@@ -116,6 +136,16 @@ func (a *Attributes) getMatchTypeAmount() string {
 		return "quickplay"
 	}
 	return "bountyhunt"
+}
+
+// Get attr value by attr key
+func (a *Attributes) getValueByKey(key string) string {
+	for _, attrRecord := range a.Attr {
+		if attrRecord.NameKey == key {
+			return attrRecord.NameValue
+		}
+	}
+	return ""
 }
 
 // Get details for each team
@@ -218,6 +248,52 @@ func (a *Attributes) getPlayersDetailsForTeam(teamIndex int, playersQty int) []P
 	// log.Printf("Team [%d] | Player [%d]: %s - %d MMR", teamIndex, i, plr.PlayerName, plr.PlayerMMR)
 	// }
 	return Players
+}
+
+// Collect events for each player and team
+func (a *Attributes) getEventsForMatch(m *Match) []MatchEvent {
+	matchEvents := []MatchEvent{}
+	eventRecord := MatchEvent{}
+	eventattrtags := [][2]string{
+		{"bountyextracted", "_extracted_bounty"},
+		{"bountypickedup", "_carried_bounty"},
+		{"downedbyme", "_downed"},
+		{"downedbyteammate", "_downed"},
+		{"downedme", "_downed"},
+		{"downedteammate", "_downed"},
+		{"killedbyme", "_killed"},
+		{"killedbyteammate", "_killed"},
+		{"killedme", "_killed"},
+		{"killedteammate", "_killed"},
+	}
+	for i := 0; i < m.TeamsQty; i++ {
+		// log.Printf("Get events for Team [%d]", i)
+		for pn, plr := range m.Teams[i].Players {
+			playerID := plr.ProfileID
+			for _, eventtag := range eventattrtags {
+				keyStringTooltip := fmt.Sprintf("MissionBagPlayer_%d_%d_tooltip%s", i, pn, eventtag[0])
+				tagTooltip := a.getValueByKey(keyStringTooltip)
+				if tagTooltip != "" {
+					matchstring := fmt.Sprintf("%s ~(\\d{1,2}):(\\d{2})", eventtag[1])
+					regex := regexp.MustCompile(matchstring)
+					matches := regex.FindAllStringSubmatch(tagTooltip, -1)
+
+					for _, match := range matches {
+						minutes, _ := strconv.Atoi(match[1])
+						seconds, _ := strconv.Atoi(strings.TrimLeft(match[2], "0"))
+						totalSeconds := minutes*60 + seconds
+						// fmt.Println("Total seconds:", totalSeconds)
+						// log.Printf("[%d] - %s (%s - %d)", totalSeconds, eventtag[0], plr.PlayerName, plr.PlayerMMR)
+						eventRecord.EventTime = totalSeconds
+						eventRecord.EventType = eventtag[0]
+						eventRecord.ProfileID = playerID
+						matchEvents = append(matchEvents, eventRecord)
+					}
+				}
+			}
+		}
+	}
+	return matchEvents
 }
 
 // ITERATOR HELPERS

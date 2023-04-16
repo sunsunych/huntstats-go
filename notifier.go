@@ -29,4 +29,20 @@ func cmdMatchResult(m Match) {
 			}
 		}
 	}
+	log.Printf("[MATCH EVENTS]")
+	for _, eventSlice := range m.Events {
+		playername := ""
+		playerteam := 0
+		playermmr := 0
+		for _, team := range m.Teams {
+			for _, plr := range team.Players {
+				if plr.ProfileID == eventSlice.ProfileID {
+					playername = plr.PlayerName
+					playerteam = team.TeamID
+					playermmr = plr.PlayerMMR
+				}
+			}
+		}
+		log.Printf("[%02d:%02d] - %s by %s [Team %d] (%d)", eventSlice.EventTime/60, eventSlice.EventTime%60, eventSlice.EventType, playername, playerteam, playermmr)
+	}
 }
