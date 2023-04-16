@@ -43,6 +43,6 @@ func cmdMatchResult(m Match) {
 				}
 			}
 		}
-		log.Printf("[%02d:%02d] - %s by %s [Team %d] (%d)", eventSlice.EventTime/60, eventSlice.EventTime%60, eventSlice.EventType, playername, playerteam, playermmr)
+		log.Printf("[%02d:%02d] - %s hunter %s [Team %d] (%d)", eventSlice.EventTime/60, eventSlice.EventTime%60, eventSlice.EventType, playername, playerteam, playermmr)
 	}
 }

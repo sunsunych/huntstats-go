@@ -258,7 +258,7 @@ func (a *Attributes) getEventsForMatch(m *Match) []MatchEvent {
 		{"bountyextracted", "_extracted_bounty"},
 		{"bountypickedup", "_carried_bounty"},
 		{"downedbyme", "_downed"},
-		{"downedbyteammate", "_downed"},
+		{"_downedbyteammate", "_downed"},
 		{"downedme", "_downed"},
 		{"downedteammate", "_downed"},
 		{"killedbyme", "_killed"},
@@ -285,7 +285,7 @@ func (a *Attributes) getEventsForMatch(m *Match) []MatchEvent {
 						// fmt.Println("Total seconds:", totalSeconds)
 						// log.Printf("[%d] - %s (%s - %d)", totalSeconds, eventtag[0], plr.PlayerName, plr.PlayerMMR)
 						eventRecord.EventTime = totalSeconds
-						eventRecord.EventType = eventtag[0]
+						eventRecord.EventType = strings.TrimLeft(eventtag[0], "_")
 						eventRecord.ProfileID = playerID
 						matchEvents = append(matchEvents, eventRecord)
 					}
