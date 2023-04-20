@@ -38,6 +38,10 @@ func onReady() {
 	} else {
 		getAttributesFolder()
 	}
+
+	db := dbconnection()
+	dbcheckscheme(db)
+
 	checkUpdatedAttributesFile(attrPath + cfgFile.AttributesSettings.Filename)
 	watchPath := attrPath + cfgFile.AttributesSettings.Filename
 	dedup(watchPath)

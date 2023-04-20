@@ -130,6 +130,7 @@ func saveNewMatchReport(m Match) {
 	if _, err := fo.Write(b); err != nil {
 		log.Printf("Config save error: %s", err)
 	}
+	dbsavematchdata(m)
 }
 
 // exists returns whether the given file or directory exists
