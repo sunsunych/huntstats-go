@@ -9,6 +9,9 @@ import (
 	"github.com/sqweek/dialog"
 )
 
+var isNotificationEnabled = true
+var isSendStatsEnabled = false
+
 func main() {
 	systray.Run(onReady, onExit)
 }
@@ -19,11 +22,32 @@ func onReady() {
 	attrPath := cfgFile.AttributesSettings.Path
 	mBrowseAttributes := systray.AddMenuItem("Set Attributes folder", "Set Attributes folder")
 	systray.AddSeparator()
+	mNotification := systray.AddMenuItemCheckbox("Notifications", "Show notifications with new results", true)
+	mSync := systray.AddMenuItemCheckbox("Send stats", "Send stats to scopestats", false)
+	systray.AddSeparator()
 	mQuit := systray.AddMenuItem("Quit", "Quits this app")
 
 	go func() {
 		for {
 			select {
+			case <-mNotification.ClickedCh:
+				if mNotification.Checked() {
+					mNotification.Uncheck()
+					isNotificationEnabled = false
+					// mNotification.SetTitle("Unchecked")
+				} else {
+					mNotification.Check()
+					isNotificationEnabled = true
+					// mNotification.SetTitle("Checked")
+				}
+			case <-mSync.ClickedCh:
+				if mSync.Checked() {
+					mSync.Uncheck()
+					// mNotification.SetTitle("Unchecked")
+				} else {
+					mSync.Check()
+					// mNotification.SetTitle("Checked")
+				}
 			case <-mBrowseAttributes.ClickedCh:
 				getAttributesFolder()
 			case <-mQuit.ClickedCh:

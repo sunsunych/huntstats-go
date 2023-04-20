@@ -92,12 +92,14 @@ func checkUpdatedAttributesFile(filepath string) {
 	matchdata := AttributeXmlOpen(filepath)
 	config := ReadConfig("config.toml")
 	if matchdata.MatchKey != config.Activity.LastSavedKeyHash {
-		msg := buildNotificationMessageBody(matchdata)
-		cmdMatchResult(matchdata)
-		err := beeep.Notify("Latest match result", msg, "assets/icon.png")
-		if err != nil {
-			log.Printf("Notifier error: %s", err)
+		if isNotificationEnabled {
+			msg := buildNotificationMessageBody(matchdata)
+			err := beeep.Notify("Latest match result", msg, "assets/icon.png")
+			if err != nil {
+				log.Printf("Notifier error: %s", err)
+			}
 		}
+		cmdMatchResult(matchdata)
 		config.Activity.LastSavedKeyHash = matchdata.MatchKey
 		config.WriteConfigParamIntoFile("config.toml")
 		saveNewMatchReport(matchdata)
