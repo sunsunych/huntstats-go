@@ -17,7 +17,7 @@ func main() {
 }
 
 func onReady() {
-	systray.SetIcon(getIcon("assets/icon_32.ico"))
+	systray.SetIcon(getIcon("assets/appicon.ico"))
 	cfgFile := ReadConfig("config.toml")
 	attrPath := cfgFile.AttributesSettings.Path
 	mBrowseAttributes := systray.AddMenuItem("Set Attributes folder", "Set Attributes folder")
