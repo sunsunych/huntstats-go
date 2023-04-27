@@ -352,7 +352,7 @@ func hashMatchKey(teams []Team) string {
 		}
 	}
 	hd := hashids.NewData()
-	hd.Salt = "hunt"
+	hd.Salt = HashSaltParam
 	hd.MinLength = 64
 	hd.Alphabet = "0123456789abcdefghijklmnopqrstuvwxyz"
 	h, _ := hashids.NewWithData(hd)

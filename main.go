@@ -12,6 +12,8 @@ import (
 var isNotificationEnabled = true
 var isSendStatsEnabled = false
 
+var HashSaltParam string
+
 func main() {
 	systray.Run(onReady, onExit)
 }
@@ -19,11 +21,16 @@ func main() {
 func onReady() {
 	systray.SetIcon(getIcon("assets/appicon.ico"))
 	cfgFile := ReadConfig("config.toml")
+	if HashSaltParam == "" {
+		HashSaltParam = "hunt"
+	}
 	attrPath := cfgFile.AttributesSettings.Path
 	mBrowseAttributes := systray.AddMenuItem("Set Attributes folder", "Set Attributes folder")
 	systray.AddSeparator()
 	mNotification := systray.AddMenuItemCheckbox("Notifications", "Show notifications with new results", true)
 	mSync := systray.AddMenuItemCheckbox("Send stats", "Send stats to scopestats", false)
+	systray.AddSeparator()
+	mTestRequest := systray.AddMenuItemCheckbox("Send test request", "Send test request", false)
 	systray.AddSeparator()
 	mQuit := systray.AddMenuItem("Quit", "Quits this app")
 
@@ -50,6 +57,8 @@ func onReady() {
 				}
 			case <-mBrowseAttributes.ClickedCh:
 				getAttributesFolder()
+			case <-mTestRequest.ClickedCh:
+				sendTestRequest()
 			case <-mQuit.ClickedCh:
 				systray.Quit()
 				return
@@ -121,4 +130,9 @@ func verifyAttributesExist(folderpath string, filename string) bool {
 		return false
 	}
 	return true
+}
+
+func sendTestRequest() {
+	log.Printf("I will send test request to scopestats")
+	log.Printf("With hash salt: %s", HashSaltParam)
 }
