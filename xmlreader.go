@@ -107,12 +107,11 @@ func IterateAttributesXML(attributeList Attributes) Match {
 	}
 	MatchData.MatchKey = hashMatchKey(MatchData.Teams)
 	Evts := attributeList.getEventsForMatch(MatchData)
-	AccoladesAmount := attributeList.getTeamsAmount()
+	AccoladesAmount := attributeList.getAccoladesAmount()
 	Accolades := attributeList.getAccoladesDetails(AccoladesAmount)
 	sort.Sort(ByTime(Evts))
 	MatchData.Events = Evts
-	fmt.Printf("Accolades: %v", Accolades)
-	// MatchData.Accolades = Accolades
+	MatchData.Accolades = Accolades
 	return *MatchData
 }
 
@@ -330,13 +329,13 @@ func (a *Attributes) getAccoladesDetails(accoladesQty int) []MatchAccolade {
 			accoladeIndex, _ := getAccoladeIndexFromKey(attrRecord.NameKey)
 			if (accoladeDataID != accoladeIndex) && (accoladeIndex <= accoladesQty) {
 				//We need to save team into Accolades slice, before assigning new accoladeIndex
-				Accolades = append(Accolades, accoladeData)
-				log.Printf("Added accolade: %v", accoladeData)
+				if accoladeData.Category != "fbe_bonus_generic" {
+					Accolades = append(Accolades, accoladeData)
+				}
 				accoladeDataID = accoladeIndex
 			}
 			if (accoladeDataID < accoladesQty) && (accoladeDataID == accoladeIndex) {
-				AttrName, AttrValue := getTeamAttributeAndValue(attrRecord)
-
+				AttrName, AttrValue := getAccoladeAttributeAndValue(attrRecord)
 				v := reflect.ValueOf(&accoladeData)
 
 				for i := 0; i < reflect.Indirect(v).NumField(); i++ {
@@ -402,6 +401,23 @@ func getTeamAttributeAndValue(rec Attr) (string, string) {
 	if len(KeySlice) > 2 {
 		AttrName := KeySlice[2]
 		AttrValue := rec.NameValue
+		return AttrName, AttrValue
+	} else {
+		return "", ""
+	}
+}
+
+// Get Accolade Attribute From Key
+func getAccoladeAttributeAndValue(rec Attr) (string, string) {
+	AttrValue := ""
+	KeySlice := strings.Split(rec.NameKey, "_")
+	if len(KeySlice) > 2 {
+		AttrName := KeySlice[2]
+		if AttrName == "category" {
+			AttrValue = strings.TrimPrefix(rec.NameValue, "accolade_")
+		} else {
+			AttrValue = rec.NameValue
+		}
 		return AttrName, AttrValue
 	} else {
 		return "", ""
