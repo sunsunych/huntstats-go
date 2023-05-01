@@ -34,7 +34,7 @@ func onReady() {
 	mNotification := systray.AddMenuItemCheckbox("Notifications", "Show notifications with new results", true)
 	mSync := systray.AddMenuItemCheckbox("Send stats", "Send stats to scopestats", false)
 	systray.AddSeparator()
-	mTestRequest := systray.AddMenuItemCheckbox("Send test request", "Send test request", false)
+	mTestRequest := systray.AddMenuItem("Send test request", "Send test request")
 	systray.AddSeparator()
 	mQuit := systray.AddMenuItem("Quit", "Quits this app")
 

@@ -91,7 +91,7 @@ func dedupLoop(w *fsnotify.Watcher) {
 func checkUpdatedAttributesFile(filepath string) {
 	matchdata := AttributeXmlOpen(filepath)
 	config := ReadConfig("config.toml")
-	if matchdata.MatchKey != config.Activity.LastSavedKeyHash {
+	if matchdata.MatchKey != config.Activity.LastSavedKeyHash && len(matchdata.MatchKey) > 0 {
 		if isNotificationEnabled {
 			msg := buildNotificationMessageBody(matchdata)
 			err := beeep.Notify("Latest match result", msg, "assets/icon.png")

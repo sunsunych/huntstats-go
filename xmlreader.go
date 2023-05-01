@@ -36,6 +36,7 @@ type Match struct {
 	MatchType string
 	Teams     []Team
 	Events    []MatchEvent
+	Accolades []MatchAccolade
 }
 
 // Prefix MissionBagTeam
@@ -59,6 +60,15 @@ type MatchEvent struct {
 	EventTime int
 	EventType string
 	ProfileID int
+}
+
+type MatchAccolade struct {
+	Category  string `hunttag:"category"`
+	Hits      int    `hunttag:"hits"`
+	XP        int    `hunttag:"xp"`
+	Bounty    int    `hunttag:"bounty"`
+	Weighting int    `hunttag:"weighting"`
+	Gold      int    `hunttag:"gold"`
 }
 
 // Interface to sort events by tmie
@@ -97,11 +107,13 @@ func IterateAttributesXML(attributeList Attributes) Match {
 	}
 	MatchData.MatchKey = hashMatchKey(MatchData.Teams)
 	Evts := attributeList.getEventsForMatch(MatchData)
+	AccoladesAmount := attributeList.getTeamsAmount()
+	Accolades := attributeList.getAccoladesDetails(AccoladesAmount)
 	sort.Sort(ByTime(Evts))
 	MatchData.Events = Evts
+	fmt.Printf("Accolades: %v", Accolades)
+	// MatchData.Accolades = Accolades
 	return *MatchData
-	// b, _ := json.Marshal(&MatchData)
-	// log.Printf("MatchData: %s", b)
 }
 
 // Attributes methods
@@ -116,7 +128,7 @@ func (a *Attributes) getTeamsAmount() int {
 	return teamsInMatch
 }
 
-// Get teams amount in the match
+// Get matchtype amount in the match
 func (a *Attributes) getMatchTypeAmount() string {
 	// teamsInMatch := 1
 	isQuickPlay := false
@@ -146,6 +158,17 @@ func (a *Attributes) getValueByKey(key string) string {
 		}
 	}
 	return ""
+}
+
+// Get accolades amount in the match
+func (a *Attributes) getAccoladesAmount() int {
+	accoladesInMatch := 1
+	for _, attrRecord := range a.Attr {
+		if attrRecord.NameKey == "MissionBagNumAccolades" {
+			accoladesInMatch, _ = strconv.Atoi(attrRecord.NameValue)
+		}
+	}
+	return accoladesInMatch
 }
 
 // Get details for each team
@@ -268,26 +291,26 @@ func (a *Attributes) getEventsForMatch(m *Match) []MatchEvent {
 	}
 	for i := 0; i < m.TeamsQty; i++ {
 		// log.Printf("Get events for Team [%d]", i)
-		for pn, plr := range m.Teams[i].Players {
-			playerID := plr.ProfileID
-			for _, eventtag := range eventattrtags {
-				keyStringTooltip := fmt.Sprintf("MissionBagPlayer_%d_%d_tooltip%s", i, pn, eventtag[0])
-				tagTooltip := a.getValueByKey(keyStringTooltip)
-				if tagTooltip != "" {
-					matchstring := fmt.Sprintf("%s ~(\\d{1,2}):(\\d{2})", eventtag[1])
-					regex := regexp.MustCompile(matchstring)
-					matches := regex.FindAllStringSubmatch(tagTooltip, -1)
+		if len(m.Teams) > 0 {
+			for pn, plr := range m.Teams[i].Players {
+				playerID := plr.ProfileID
+				for _, eventtag := range eventattrtags {
+					keyStringTooltip := fmt.Sprintf("MissionBagPlayer_%d_%d_tooltip%s", i, pn, eventtag[0])
+					tagTooltip := a.getValueByKey(keyStringTooltip)
+					if tagTooltip != "" {
+						matchstring := fmt.Sprintf("%s ~(\\d{1,2}):(\\d{2})", eventtag[1])
+						regex := regexp.MustCompile(matchstring)
+						matches := regex.FindAllStringSubmatch(tagTooltip, -1)
 
-					for _, match := range matches {
-						minutes, _ := strconv.Atoi(match[1])
-						seconds, _ := strconv.Atoi(strings.TrimLeft(match[2], "0"))
-						totalSeconds := minutes*60 + seconds
-						// fmt.Println("Total seconds:", totalSeconds)
-						// log.Printf("[%d] - %s (%s - %d)", totalSeconds, eventtag[0], plr.PlayerName, plr.PlayerMMR)
-						eventRecord.EventTime = totalSeconds
-						eventRecord.EventType = strings.TrimLeft(eventtag[0], "_")
-						eventRecord.ProfileID = playerID
-						matchEvents = append(matchEvents, eventRecord)
+						for _, match := range matches {
+							minutes, _ := strconv.Atoi(match[1])
+							seconds, _ := strconv.Atoi(strings.TrimLeft(match[2], "0"))
+							totalSeconds := minutes*60 + seconds
+							eventRecord.EventTime = totalSeconds
+							eventRecord.EventType = strings.TrimLeft(eventtag[0], "_")
+							eventRecord.ProfileID = playerID
+							matchEvents = append(matchEvents, eventRecord)
+						}
 					}
 				}
 			}
@@ -296,9 +319,62 @@ func (a *Attributes) getEventsForMatch(m *Match) []MatchEvent {
 	return matchEvents
 }
 
+// Get accolades from mission
+func (a *Attributes) getAccoladesDetails(accoladesQty int) []MatchAccolade {
+	Accolades := []MatchAccolade{}
+	accoladeData := MatchAccolade{}
+	accoladeDataID := 0
+
+	for _, attrRecord := range a.Attr {
+		if strings.HasPrefix(attrRecord.NameKey, "MissionAccoladeEntry_") {
+			accoladeIndex, _ := getAccoladeIndexFromKey(attrRecord.NameKey)
+			if (accoladeDataID != accoladeIndex) && (accoladeIndex <= accoladesQty) {
+				//We need to save team into Accolades slice, before assigning new accoladeIndex
+				Accolades = append(Accolades, accoladeData)
+				log.Printf("Added accolade: %v", accoladeData)
+				accoladeDataID = accoladeIndex
+			}
+			if (accoladeDataID < accoladesQty) && (accoladeDataID == accoladeIndex) {
+				AttrName, AttrValue := getTeamAttributeAndValue(attrRecord)
+
+				v := reflect.ValueOf(&accoladeData)
+
+				for i := 0; i < reflect.Indirect(v).NumField(); i++ {
+					field := reflect.Indirect(v).Field(i)
+					tag := reflect.Indirect(v).Type().Field(i).Tag.Get("hunttag")
+					if (tag == AttrName) && (tag != "") {
+						switch reflect.Indirect(v).Field(i).Type().Name() {
+						case "int":
+							convertedValue, _ := strconv.Atoi(AttrValue)
+							field.Set(reflect.ValueOf(convertedValue))
+						case "bool":
+							convertedValue, _ := strconv.ParseBool(AttrValue)
+							field.Set(reflect.ValueOf(convertedValue))
+						default:
+							field.Set(reflect.ValueOf(AttrValue))
+						}
+					}
+				}
+			}
+		}
+	}
+	return Accolades
+}
+
 // ITERATOR HELPERS
 // Get Team Index From Key
 func getTeamIndexFromKey(key string) (int, bool) {
+	KeySlice := strings.Split(key, "_")
+	if len(KeySlice) >= 2 {
+		teamIndex, _ := strconv.Atoi(KeySlice[1])
+		return teamIndex, true
+	} else {
+		return 0, false
+	}
+}
+
+// Get Accolade Index From Key
+func getAccoladeIndexFromKey(key string) (int, bool) {
 	KeySlice := strings.Split(key, "_")
 	if len(KeySlice) >= 2 {
 		teamIndex, _ := strconv.Atoi(KeySlice[1])
@@ -369,3 +445,7 @@ func hashMatchKey(teams []Team) string {
 //   const seconds = match[2];
 //   console.log(`Minutes: ${minutes}, Seconds: ${seconds}`);
 // }
+
+func identifyReporter() {
+	//
+}

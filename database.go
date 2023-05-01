@@ -40,6 +40,9 @@ func dbcheckscheme(db *sql.DB) {
 
 	_, err = db.Exec("CREATE TABLE IF NOT EXISTS matchevent (record_id INTEGER PRIMARY KEY AUTOINCREMENT, matchrecord INTEGER, eventtime INTEGER, eventtype TEXT, profileid INTEGER)")
 	checkErr(err)
+
+	_, err = db.Exec("CREATE TABLE IF NOT EXISTS matchaccolade (record_id INTEGER PRIMARY KEY AUTOINCREMENT, matchrecord INTEGER, category TEXT, hits INTEGER, xp INTEGER, bounty INTEGER, weighting INTEGER, gold INTEGER)")
+	checkErr(err)
 }
 
 // Read data from DB
@@ -136,6 +139,20 @@ func savematchdata(db *sql.DB, id int, m Match) {
 		eventtype := matchevent.EventType
 		profileid := matchevent.ProfileID
 		_, err := db.Exec("INSERT INTO matchevent(matchrecord,eventtime,eventtype,profileid) values(?,?,?,?)", matchrecord, eventtime, eventtype, profileid)
+		if err != nil {
+			log.Print(err)
+		}
+	}
+
+	//Accolades
+	for _, matchaccolade := range m.Accolades {
+		category := matchaccolade.Category
+		hits := matchaccolade.Hits
+		xp := matchaccolade.XP
+		bounty := matchaccolade.Bounty
+		weighting := matchaccolade.Weighting
+		gold := matchaccolade.Gold
+		_, err := db.Exec("INSERT INTO matchaccolade(matchrecord,category,hits,xp,bounty,weighting,gold) values(?,?,?,?,?,?,?)", matchrecord, category, hits, xp, bounty, weighting, gold)
 		if err != nil {
 			log.Print(err)
 		}
