@@ -463,5 +463,13 @@ func hashMatchKey(teams []Team) string {
 // }
 
 func identifyReporter() {
-	//
+	tiol, err := getPlayersTeamIsOwnList()
+	if err != nil {
+		log.Printf("Error: %v", err)
+	}
+	if len(tiol) > 1 {
+		if tiol[0].Gamesplayed > tiol[1].Gamesplayed {
+			log.Printf("Reporter is set to: %s", tiol[0].Playername)
+		}
+	}
 }

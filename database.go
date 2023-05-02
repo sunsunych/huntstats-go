@@ -10,6 +10,13 @@ import (
 
 var dbpath = "./data/matchdata.db"
 
+// List of games played by teammates
+type TeamisownList struct {
+	Playername  string
+	Profileid   int
+	Gamesplayed int
+}
+
 func dbconnection() *sql.DB {
 	checkdbexist()
 
@@ -79,6 +86,17 @@ func dbsavematchdata(m Match) {
 	}
 
 	savematchdata(dbconn, matchid, m)
+}
+
+// Get players team is own
+func getPlayersTeamIsOwnList() ([]TeamisownList, error) {
+	dbconn := dbconnection()
+
+	tiol, err := getTeamIsOwnPlayers(dbconn)
+	if err != nil {
+		return nil, err
+	}
+	return tiol, nil
 }
 
 func getmatchid(db *sql.DB, k string) (bool, int) {
@@ -157,6 +175,30 @@ func savematchdata(db *sql.DB, id int, m Match) {
 			log.Print(err)
 		}
 	}
+}
+
+func getTeamIsOwnPlayers(db *sql.DB) ([]TeamisownList, error) {
+	var PlayerIsOwnList []TeamisownList
+	sqlStmt := "SELECT playername, profileid, count(profileid) as gamesplayed FROM teamplayer WHERE teamisown=1 AND ispartner=0 GROUP BY profileid ORDER BY gamesplayed DESC LIMIT 5"
+	rows, err := db.Query(sqlStmt)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var tiol TeamisownList
+		if err := rows.Scan(&tiol.Playername, &tiol.Profileid, &tiol.Gamesplayed); err != nil {
+			return PlayerIsOwnList, err
+		}
+		PlayerIsOwnList = append(PlayerIsOwnList, tiol)
+	}
+
+	if err = rows.Err(); err != nil {
+		return PlayerIsOwnList, err
+	}
+
+	return PlayerIsOwnList, nil
 }
 
 // DB HELPERS

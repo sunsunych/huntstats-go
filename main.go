@@ -62,7 +62,7 @@ func onReady() {
 			case <-mBrowseAttributes.ClickedCh:
 				getAttributesFolder()
 			case <-mTestRequest.ClickedCh:
-				sendTestRequest()
+				identifyReporter()
 			case <-mQuit.ClickedCh:
 				systray.Quit()
 				return
