@@ -104,7 +104,14 @@ func checkUpdatedAttributesFile(filepath string) {
 		config.WriteConfigParamIntoFile("config.toml")
 		saveNewMatchReport(matchdata)
 		if config.Activity.Reporter == 0 {
-			identifyReporter()
+			if identifyReporter() {
+				reporterid := getReporterID()
+				sendTestRequest(reporterid, matchdata)
+			}
+		}
+		if config.Activity.Reporter != 0 {
+			reporterid := getReporterID()
+			sendTestRequest(reporterid, matchdata)
 		}
 	}
 }

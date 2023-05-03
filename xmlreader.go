@@ -462,7 +462,7 @@ func hashMatchKey(teams []Team) string {
 //   console.log(`Minutes: ${minutes}, Seconds: ${seconds}`);
 // }
 
-func identifyReporter() {
+func identifyReporter() bool {
 	tiol, err := getPlayersTeamIsOwnList()
 	if err != nil {
 		log.Printf("Error: %v", err)
@@ -470,13 +470,16 @@ func identifyReporter() {
 	if len(tiol) > 1 {
 		if tiol[0].Gamesplayed > tiol[1].Gamesplayed {
 			setReporterID(tiol[0].Profileid)
+			return true
 		}
 	}
 	if len(tiol) == 1 {
 		if tiol[0].Gamesplayed > 2 {
 			setReporterID(tiol[0].Profileid)
+			return true
 		}
 	}
+	return false
 }
 
 // get IdentytyID integer

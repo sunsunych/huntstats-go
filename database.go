@@ -213,6 +213,18 @@ func getPlayerNameByID(playerid int) (string, error) {
 	return playername, nil
 }
 
+func getPlayerMMRByID(playerid int) (int, error) {
+	db := dbconnection()
+	var playermmr int
+	sqlStmt := "SELECT playermmr FROM teamplayer WHERE profileid=? ORDER BY record_id DESC LIMIT 1"
+	err := db.QueryRow(sqlStmt, playerid).Scan(&playermmr)
+	if err != nil {
+		log.Printf("Error: ", err)
+		return 0, err
+	}
+	return playermmr, nil
+}
+
 // DB HELPERS
 func checkErr(err error) {
 	if err != nil {
