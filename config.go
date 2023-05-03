@@ -16,6 +16,8 @@ type (
 
 	Activity struct {
 		LastSavedKeyHash string
+		Reporter         int
+		SendReports      bool
 	}
 
 	configfile struct {

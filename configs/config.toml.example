@@ -1,2 +1,8 @@
 [AttributesSettings]
-Path = 'C:\Users\sunsu\workspace\hunt'
+Path = 'C:\hunt'
+Filename = '\attributes.xml'
+
+[Activity]
+LastSavedKeyHash = '0'
+ReporterID = 0
+SendReports = false

@@ -29,12 +29,29 @@ func onReady() {
 		HashSaltParam = "hunt"
 	}
 	attrPath := cfgFile.AttributesSettings.Path
+
+	db := dbconnection()
+	dbcheckscheme(db)
+
 	mBrowseAttributes := systray.AddMenuItem("Set Attributes folder", "Set Attributes folder")
 	systray.AddSeparator()
-	mNotification := systray.AddMenuItemCheckbox("Notifications", "Show notifications with new results", true)
-	mSync := systray.AddMenuItemCheckbox("Send stats", "Send stats to scopestats", false)
+	mNotification := systray.AddMenuItemCheckbox("Notifications", "Show notifications with new results", false)
+	mSync := systray.AddMenuItemCheckbox("Send stats", "Send stats to scopestats", true)
+	if cfgFile.Activity.SendReports {
+		mSync.Check()
+	} else {
+		mSync.Uncheck()
+	}
 	systray.AddSeparator()
-	mTestRequest := systray.AddMenuItem("Send test request", "Send test request")
+	mReportername := systray.AddMenuItem("Identify reporter", "Identify reporter")
+	if cfgFile.Activity.Reporter != 0 {
+		playername, err := getPlayerNameByID(cfgFile.Activity.Reporter)
+		if err != nil {
+			log.Printf("Error on read reporter name")
+		}
+		mReportername.SetTitle(playername)
+		mReportername.Disable()
+	}
 	systray.AddSeparator()
 	mQuit := systray.AddMenuItem("Quit", "Quits this app")
 
@@ -54,15 +71,19 @@ func onReady() {
 			case <-mSync.ClickedCh:
 				if mSync.Checked() {
 					mSync.Uncheck()
-					// mNotification.SetTitle("Unchecked")
+					isSendStatsEnabled = false
+					cfgFile.Activity.SendReports = false
+					cfgFile.WriteConfigParamIntoFile("config.toml")
 				} else {
 					mSync.Check()
-					// mNotification.SetTitle("Checked")
+					isSendStatsEnabled = true
+					cfgFile.Activity.SendReports = true
+					cfgFile.WriteConfigParamIntoFile("config.toml")
 				}
 			case <-mBrowseAttributes.ClickedCh:
 				getAttributesFolder()
-			case <-mTestRequest.ClickedCh:
-				identifyReporter()
+			// case <-mReportername.ClickedCh:
+			// identifyReporter()
 			case <-mQuit.ClickedCh:
 				systray.Quit()
 				return
@@ -75,9 +96,6 @@ func onReady() {
 	} else {
 		getAttributesFolder()
 	}
-
-	db := dbconnection()
-	dbcheckscheme(db)
 
 	checkUpdatedAttributesFile(attrPath + cfgFile.AttributesSettings.Filename)
 	watchPath := attrPath + cfgFile.AttributesSettings.Filename

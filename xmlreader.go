@@ -469,7 +469,29 @@ func identifyReporter() {
 	}
 	if len(tiol) > 1 {
 		if tiol[0].Gamesplayed > tiol[1].Gamesplayed {
-			log.Printf("Reporter is set to: %s", tiol[0].Playername)
+			setReporterID(tiol[0].Profileid)
 		}
 	}
+	if len(tiol) == 1 {
+		if tiol[0].Gamesplayed > 2 {
+			setReporterID(tiol[0].Profileid)
+		}
+	}
+}
+
+// get IdentytyID integer
+func getReporterID() int {
+	cfgFile := ReadConfig("config.toml")
+	if cfgFile.Activity.Reporter != 0 {
+		return cfgFile.Activity.Reporter
+	} else {
+		return 0
+	}
+}
+
+// set IdentytyID integer
+func setReporterID(reporterid int) {
+	cfgFile := ReadConfig("config.toml")
+	cfgFile.Activity.Reporter = reporterid
+	cfgFile.WriteConfigParamIntoFile("config.toml")
 }

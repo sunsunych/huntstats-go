@@ -103,6 +103,9 @@ func checkUpdatedAttributesFile(filepath string) {
 		config.Activity.LastSavedKeyHash = matchdata.MatchKey
 		config.WriteConfigParamIntoFile("config.toml")
 		saveNewMatchReport(matchdata)
+		if config.Activity.Reporter == 0 {
+			identifyReporter()
+		}
 	}
 }
 

@@ -4,3 +4,5 @@ Filename = '\attributes.xml'
 
 [Activity]
 LastSavedKeyHash = '0'
+ReporterID = 0
+SendReports = false

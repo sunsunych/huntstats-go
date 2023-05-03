@@ -201,6 +201,18 @@ func getTeamIsOwnPlayers(db *sql.DB) ([]TeamisownList, error) {
 	return PlayerIsOwnList, nil
 }
 
+func getPlayerNameByID(playerid int) (string, error) {
+	db := dbconnection()
+	var playername string
+	sqlStmt := "SELECT distinct(playername) FROM teamplayer WHERE profileid=? LIMIT 1"
+	err := db.QueryRow(sqlStmt, playerid).Scan(&playername)
+	if err != nil {
+		log.Printf("Error: ", err)
+		return "", err
+	}
+	return playername, nil
+}
+
 // DB HELPERS
 func checkErr(err error) {
 	if err != nil {
