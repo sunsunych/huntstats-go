@@ -20,7 +20,7 @@ func sendTestRequest(reporterid int, payload Match) {
 	h, _ := hashids.NewWithData(hd)
 	e, _ := h.Encode(reporter)
 
-	url := "http://127.0.0.1:3000/"
+	url := "http://127.0.0.1:3000/v1/submitreport"
 	contentType := "application/json"
 	data, err := json.Marshal(payload)
 	if err != nil {
