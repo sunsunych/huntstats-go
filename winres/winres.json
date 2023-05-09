@@ -2,8 +2,8 @@
   "RT_GROUP_ICON": {
     "APP": {
       "0000": [
-        "icon.png",
-        "icon16.png"
+        "icon_32.png",
+        "icon_64.png"
       ]
     }
   },
@@ -36,22 +36,22 @@
     "#1": {
       "0000": {
         "fixed": {
-          "file_version": "0.0.0.0",
-          "product_version": "0.0.0.0"
+          "file_version": "0.0.0.2",
+          "product_version": "0.0.0.2"
         },
         "info": {
           "0409": {
             "Comments": "",
-            "CompanyName": "",
+            "CompanyName": "SunTeam",
             "FileDescription": "",
-            "FileVersion": "",
-            "InternalName": "",
+            "FileVersion": "0.0.0.2",
+            "InternalName": "HuntStats",
             "LegalCopyright": "",
             "LegalTrademarks": "",
             "OriginalFilename": "",
             "PrivateBuild": "",
-            "ProductName": "",
-            "ProductVersion": "",
+            "ProductName": "HuntStats",
+            "ProductVersion": "0.0.0.2",
             "SpecialBuild": ""
           }
         }
