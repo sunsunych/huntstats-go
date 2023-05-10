@@ -4,12 +4,14 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/speps/go-hashids/v2"
 )
 
-func sendTestRequest(reporterid int, payload Match) {
+func sendMatchReport(reporterid int, payload Match) {
+	log.Printf("Start to try to send report")
 	reporter := make([]int, 0)
 	reporter = append(reporter, reporterid)
 
@@ -20,7 +22,8 @@ func sendTestRequest(reporterid int, payload Match) {
 	h, _ := hashids.NewWithData(hd)
 	e, _ := h.Encode(reporter)
 
-	url := "http://127.0.0.1:3000/v1/submitreport"
+	url := fmt.Sprintf("%s/v1/submitreport", ReportServer)
+	log.Printf("Report URL: %s", url)
 	contentType := "application/json"
 	data, err := json.Marshal(payload)
 	if err != nil {
@@ -43,12 +46,5 @@ func sendTestRequest(reporterid int, payload Match) {
 		return
 	}
 	defer resp.Body.Close()
-
-	// body, err := ioutil.ReadAll(resp.Body)
-	// if err != nil {
-	// 	fmt.Println(err)
-	// 	return
-	// }
-
-	// fmt.Println(string(body))
+	log.Printf("End to try to send report")
 }

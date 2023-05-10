@@ -74,18 +74,17 @@ func dbreadTemplate(db *sql.DB) {
 }
 
 // Save matchdata
-func dbsavematchdata(m Match) {
+func saveNewMatchReport(m Match) {
 	dbconn := dbconnection()
 
 	//Get matchid record
 	isoldmatch, matchid := getmatchid(dbconn, m.MatchKey)
 	if isoldmatch {
-		log.Printf("Is OLD Match with MatchID: %d", matchid)
+		log.Printf("Is OLD Match with MatchID: %d (No new records)", matchid)
 	} else {
-		log.Printf("Is NEW Match with MatchID: %d", matchid)
+		log.Printf("Is NEW Match with MatchID: %d (Match records will be saved)", matchid)
+		savematchdata(dbconn, matchid, m)
 	}
-
-	savematchdata(dbconn, matchid, m)
 }
 
 // Get players team is own

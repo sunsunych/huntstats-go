@@ -1,8 +1,6 @@
 package main
 
 import (
-	"encoding/json"
-	"fmt"
 	"log"
 	"math"
 	"os"
@@ -99,50 +97,20 @@ func checkUpdatedAttributesFile(filepath string) {
 				log.Printf("Notifier error: %s", err)
 			}
 		}
-		cmdMatchResult(matchdata)
 		config.Activity.LastSavedKeyHash = matchdata.MatchKey
 		config.WriteConfigParamIntoFile("config.toml")
 		saveNewMatchReport(matchdata)
 		if config.Activity.Reporter == 0 {
-			if identifyReporter() && config.Activity.SendReports == true {
+			if identifyReporter() && isSendStatsEnabled == true {
 				reporterid := getReporterID()
-				sendTestRequest(reporterid, matchdata)
+				sendMatchReport(reporterid, matchdata)
 			}
 		}
-		if config.Activity.Reporter != 0 && config.Activity.SendReports == true {
+		if config.Activity.Reporter != 0 && isSendStatsEnabled == true {
 			reporterid := getReporterID()
-			sendTestRequest(reporterid, matchdata)
+			sendMatchReport(reporterid, matchdata)
 		}
 	}
-}
-
-func saveNewMatchReport(m Match) {
-	isExist, err := checkIfFolderExists("./history")
-	check(err)
-	t := time.Now()
-	filename := fmt.Sprintf(t.Format("20060102150405"))
-	if !isExist {
-		err = os.Mkdir("history", 0755)
-		if err != nil {
-			log.Fatal(err)
-		}
-	}
-	b, err := json.Marshal(m)
-	if err != nil {
-		fmt.Printf("Error: %s", err)
-		return
-	}
-	fo, err := os.Create("./history/" + filename + ".json")
-	check(err)
-	defer func() {
-		if err := fo.Close(); err != nil {
-			log.Printf("Config save error: %s", err)
-		}
-	}()
-	if _, err := fo.Write(b); err != nil {
-		log.Printf("Config save error: %s", err)
-	}
-	dbsavematchdata(m)
 }
 
 // exists returns whether the given file or directory exists

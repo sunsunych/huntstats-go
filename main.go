@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"strconv"
 
 	"github.com/getlantern/systray"
 	"github.com/sqweek/dialog"
@@ -12,8 +13,10 @@ import (
 
 var isNotificationEnabled = true
 var isSendStatsEnabled = false
+var isDebugParam = "false"
 
 var HashSaltParam string
+var ReportServer string
 
 func main() {
 	systray.Run(onReady, onExit)
@@ -22,6 +25,13 @@ func main() {
 func onReady() {
 	systray.SetIcon(getIcon("assets/appicon.ico"))
 	cfgFile := ReadConfig("config.toml")
+	isDebug, _ := strconv.ParseBool(isDebugParam)
+
+	if isDebug {
+		ReportServer = "http://127.0.0.1:3000"
+	} else {
+		ReportServer = "https://api.scopestats.com"
+	}
 
 	// open a file
 	f, err := os.OpenFile("events.log", os.O_APPEND|os.O_CREATE|os.O_RDWR, 0666)
