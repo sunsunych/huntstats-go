@@ -54,7 +54,7 @@ func SearchHuntAppFolder(filepath string) map[string]interface{} {
 	p := vdf.NewParser(f)
 	m, err := p.Parse()
 	if err != nil {
-		dialog.Message("Could not found installed Hunt:Showdown")
+		dialog.Message("Could not found installed Hunt:Showdown").Title("Error").Error()
 	}
 
 	return m

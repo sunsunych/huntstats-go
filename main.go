@@ -65,24 +65,24 @@ func onReady() {
 	} else {
 		mSync.Uncheck()
 	}
-	systray.AddSeparator()
-	mReportername := systray.AddMenuItem("Identify reporter", "Click to update")
+	mReportername := systray.AddMenuItem("- Unkown reporter -", "Click to update")
 	if cfgFile.Activity.Reporter != 0 {
 		playername, err := getPlayerNameByID(cfgFile.Activity.Reporter)
 		if err != nil {
-			mReportername.Disable()
+			mReportername.Hide()
 		}
 		playermmr, err := getPlayerMMRByID(cfgFile.Activity.Reporter)
 		if err != nil {
-			mReportername.Disable()
+			mReportername.Hide()
 		}
-		if !mReportername.Disabled() {
+		if playername != "" && playermmr > 0 {
 			titleStr := fmt.Sprintf("%s - [%d]", playername, playermmr)
 			mReportername.SetTitle(titleStr)
+			mReportername.Show()
 		}
 	}
 	if cfgFile.Activity.Reporter == 0 {
-		mReportername.Disable()
+		mReportername.Hide()
 	}
 	systray.AddSeparator()
 	mQuit := systray.AddMenuItem("Quit", "Quits this app")
@@ -117,7 +117,6 @@ func onReady() {
 			case <-mBrowseAttributes.ClickedCh:
 				getAttributesFolder()
 			case <-mReportername.ClickedCh:
-				log.Printf("%s", mReportername.String())
 				if cfgFile.Activity.Reporter != 0 {
 					playername, err := getPlayerNameByID(cfgFile.Activity.Reporter)
 					if err != nil {
@@ -145,6 +144,8 @@ func onReady() {
 		getAttributesFolder()
 	}
 
+	log.Printf("DEBUG MODE IS: %v", isDebug)
+
 	checkUpdatedAttributesFile(attrPath + cfgFile.AttributesSettings.Filename)
 	watchPath := attrPath + cfgFile.AttributesSettings.Filename
 	dedup(watchPath)
@@ -162,21 +163,19 @@ func getIcon(s string) []byte {
 	return b
 }
 
-func getAttributesFolder() string {
+func getAttributesFolder() {
 	confFile := ReadConfig("config.toml")
 	directorySelectDialog := dialog.Directory()
 	if !verifyAttributesExist(confFile.AttributesSettings.Path, confFile.AttributesSettings.Filename) {
 		directorySelectDialog.SetStartDir(GetRegSteamFolderValue())
 	}
 	directory, err := directorySelectDialog.Title("Find folder with attributes XML files").Browse()
-	log.Printf("Selected folder: %s", directory)
 	if err != nil {
 		log.Println("Config set error:", err)
 	} else {
 		setAttributesFolderByBrowse(directory)
 		// confFile.WriteConfigParamIntoFile("config.toml")
 	}
-	return directory
 }
 
 func setAttributesFolderByBrowse(p string) {
@@ -192,7 +191,6 @@ func check(err error) {
 }
 
 func verifyAttributesExist(folderpath string, filename string) bool {
-	log.Printf("Check attributes at %s%s", folderpath, filename)
 	fullPath := folderpath + filename
 	_, err := os.Stat(fullPath)
 	if os.IsNotExist(err) {

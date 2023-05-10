@@ -29,8 +29,15 @@ func dedup(paths ...string) {
 		if err != nil {
 			log.Printf("Notifier error: %s", err)
 		}
+		log.Printf("Starting to watch file %s", p)
 	}
 	<-make(chan struct{}) // Block forever
+}
+
+func dedupList(fw *fsnotify.Watcher) {
+	for k, v := range fw.WatchList() {
+		log.Printf("K: %d | V: %s", k, v)
+	}
 }
 
 func dedupLoop(w *fsnotify.Watcher) {

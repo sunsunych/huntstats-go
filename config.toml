@@ -1,8 +1,9 @@
 [AttributesSettings]
-Path = 'C:\Users\sunsu\workspace\hunt\profile'
+Path = 'D:\workspace\huntshowdownstats\fakeattr'
 Filename = '\attributes.xml'
 
 [Activity]
-LastSavedKeyHash = 'pzepbwj9nfewlwxknau5bepnk2o1amm6d6jws6aaglgq9u9rmk3nr91de2b3obosr4o95pz2cb7plex7'
+LastSavedKeyHash = 'lg669d93zu544qkqn9uw2og392wt3owqg4d4smklml76t7gqx4lxmhjrz5a679tmdkj739dubggdewjji4ll2x9z2fzqz9m2op'
 Reporter = 55834722896
 SendReports = false
+Notifications = true
