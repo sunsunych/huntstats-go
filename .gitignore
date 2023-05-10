@@ -1,5 +1,5 @@
 config.toml
 /history/*
-/build/*
+build/
 
 *.db

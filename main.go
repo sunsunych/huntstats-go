@@ -22,6 +22,19 @@ func main() {
 func onReady() {
 	systray.SetIcon(getIcon("assets/appicon.ico"))
 	cfgFile := ReadConfig("config.toml")
+
+	// open a file
+	f, err := os.OpenFile("events.log", os.O_APPEND|os.O_CREATE|os.O_RDWR, 0666)
+	if err != nil {
+		fmt.Printf("error opening file: %v", err)
+	}
+
+	// don't forget to close it
+	defer f.Close()
+
+	// assign it to the standard logger
+	log.SetOutput(f)
+
 	if HashSaltParam == "" {
 		HashSaltParam = "hunt"
 	}

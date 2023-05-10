@@ -104,12 +104,12 @@ func checkUpdatedAttributesFile(filepath string) {
 		config.WriteConfigParamIntoFile("config.toml")
 		saveNewMatchReport(matchdata)
 		if config.Activity.Reporter == 0 {
-			if identifyReporter() {
+			if identifyReporter() && config.Activity.SendReports == true {
 				reporterid := getReporterID()
 				sendTestRequest(reporterid, matchdata)
 			}
 		}
-		if config.Activity.Reporter != 0 {
+		if config.Activity.Reporter != 0 && config.Activity.SendReports == true {
 			reporterid := getReporterID()
 			sendTestRequest(reporterid, matchdata)
 		}
