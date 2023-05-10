@@ -3,3 +3,5 @@ config.toml
 build/
 
 *.db
+*.toml
+*.log
