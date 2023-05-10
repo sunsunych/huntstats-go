@@ -7,6 +7,7 @@ import (
 	"reflect"
 
 	"github.com/andygrunwald/vdf"
+	"github.com/sqweek/dialog"
 )
 
 type Libfolders struct {
@@ -53,7 +54,7 @@ func SearchHuntAppFolder(filepath string) map[string]interface{} {
 	p := vdf.NewParser(f)
 	m, err := p.Parse()
 	if err != nil {
-		panic(err)
+		dialog.Message("Could not found installed Hunt:Showdown")
 	}
 
 	return m
