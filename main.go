@@ -11,7 +11,7 @@ import (
 	"github.com/sqweek/dialog"
 )
 
-var isNotificationEnabled = true
+var isNotificationEnabled = false
 var isSendStatsEnabled = false
 var isDebugParam = "false"
 
@@ -25,25 +25,23 @@ func main() {
 func onReady() {
 	systray.SetIcon(getIcon("assets/appicon.ico"))
 	cfgFile := ReadConfig("config.toml")
-	isDebug, _ := strconv.ParseBool(isDebugParam)
 
-	if isDebug {
-		ReportServer = "http://127.0.0.1:3000"
-	} else {
-		ReportServer = "https://api.scopestats.com"
-	}
-
-	// open a file
+	// Logfile setup
 	f, err := os.OpenFile("events.log", os.O_APPEND|os.O_CREATE|os.O_RDWR, 0666)
 	if err != nil {
 		fmt.Printf("error opening file: %v", err)
 	}
-
-	// don't forget to close it
 	defer f.Close()
-
-	// assign it to the standard logger
 	log.SetOutput(f)
+
+	// Check isDebug param
+	isDebug, _ := strconv.ParseBool(isDebugParam)
+	if isDebug {
+		log.Printf("Started as debug build")
+		ReportServer = "http://127.0.0.1:3000"
+	} else {
+		ReportServer = "https://api.scopestats.com"
+	}
 
 	if HashSaltParam == "" {
 		HashSaltParam = "hunt"
@@ -55,7 +53,12 @@ func onReady() {
 
 	mBrowseAttributes := systray.AddMenuItem("Set Attributes folder", "Set Attributes folder")
 	systray.AddSeparator()
-	mNotification := systray.AddMenuItemCheckbox("Notifications", "Show notifications with new results", false)
+	mNotification := systray.AddMenuItemCheckbox("Notifications", "Show notifications with new results", true)
+	if cfgFile.Activity.Notifications {
+		mNotification.Check()
+	} else {
+		mNotification.Uncheck()
+	}
 	mSync := systray.AddMenuItemCheckbox("Send stats", "Send stats to scopestats", true)
 	if cfgFile.Activity.SendReports {
 		mSync.Check()
@@ -65,10 +68,21 @@ func onReady() {
 	systray.AddSeparator()
 	mReportername := systray.AddMenuItem("Identify reporter", "Click to update")
 	if cfgFile.Activity.Reporter != 0 {
-		playername, _ := getPlayerNameByID(cfgFile.Activity.Reporter)
-		playermmr, _ := getPlayerMMRByID(cfgFile.Activity.Reporter)
-		titleStr := fmt.Sprintf("%s - [%d]", playername, playermmr)
-		mReportername.SetTitle(titleStr)
+		playername, err := getPlayerNameByID(cfgFile.Activity.Reporter)
+		if err != nil {
+			mReportername.Disable()
+		}
+		playermmr, err := getPlayerMMRByID(cfgFile.Activity.Reporter)
+		if err != nil {
+			mReportername.Disable()
+		}
+		if !mReportername.Disabled() {
+			titleStr := fmt.Sprintf("%s - [%d]", playername, playermmr)
+			mReportername.SetTitle(titleStr)
+		}
+	}
+	if cfgFile.Activity.Reporter == 0 {
+		mReportername.Disable()
 	}
 	systray.AddSeparator()
 	mQuit := systray.AddMenuItem("Quit", "Quits this app")
@@ -80,11 +94,13 @@ func onReady() {
 				if mNotification.Checked() {
 					mNotification.Uncheck()
 					isNotificationEnabled = false
-					// mNotification.SetTitle("Unchecked")
+					cfgFile.Activity.Notifications = false
+					cfgFile.WriteConfigParamIntoFile("config.toml")
 				} else {
 					mNotification.Check()
 					isNotificationEnabled = true
-					// mNotification.SetTitle("Checked")
+					cfgFile.Activity.Notifications = true
+					cfgFile.WriteConfigParamIntoFile("config.toml")
 				}
 			case <-mSync.ClickedCh:
 				if mSync.Checked() {
@@ -101,10 +117,21 @@ func onReady() {
 			case <-mBrowseAttributes.ClickedCh:
 				getAttributesFolder()
 			case <-mReportername.ClickedCh:
-				playername, _ := getPlayerNameByID(cfgFile.Activity.Reporter)
-				playermmr, _ := getPlayerMMRByID(cfgFile.Activity.Reporter)
-				titleStr := fmt.Sprintf("%s - [%d]", playername, playermmr)
-				mReportername.SetTitle(titleStr)
+				log.Printf("%s", mReportername.String())
+				if cfgFile.Activity.Reporter != 0 {
+					playername, err := getPlayerNameByID(cfgFile.Activity.Reporter)
+					if err != nil {
+						mReportername.Disable()
+					}
+					playermmr, err := getPlayerMMRByID(cfgFile.Activity.Reporter)
+					if err != nil {
+						mReportername.Disable()
+					}
+					if !mReportername.Disabled() {
+						titleStr := fmt.Sprintf("%s - [%d]", playername, playermmr)
+						mReportername.SetTitle(titleStr)
+					}
+				}
 			case <-mQuit.ClickedCh:
 				systray.Quit()
 				return

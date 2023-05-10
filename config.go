@@ -18,6 +18,7 @@ type (
 		LastSavedKeyHash string
 		Reporter         int
 		SendReports      bool
+		Notifications    bool
 	}
 
 	configfile struct {
@@ -33,6 +34,9 @@ func ReadConfig(filename string) configfile {
 
 	err := toml.Unmarshal(f, &cfg)
 	check(err)
+
+	isNotificationEnabled = cfg.Activity.Notifications
+	isSendStatsEnabled = cfg.Activity.SendReports
 	return cfg
 }
 

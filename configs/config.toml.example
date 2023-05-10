@@ -6,3 +6,4 @@ Filename = '\attributes.xml'
 LastSavedKeyHash = '0'
 ReporterID = 0
 SendReports = false
+Notifications = false
