@@ -42,15 +42,64 @@ func onReady() {
 	} else {
 		ReportServer = "https://api.scopestats.com"
 	}
+	log.Printf("DEBUG MODE IS: %v", isDebug)
 
+	// Hash parameter setup
 	if HashSaltParam == "" {
 		HashSaltParam = "hunt"
 	}
-	attrPath := cfgFile.AttributesSettings.Path
 
+	// Set file attributes.xml path
+	attrPath := fmt.Sprintf("%s%s", cfgFile.AttributesSettings.Path, cfgFile.AttributesSettings.Filename)
+	isAttributesPathValid := false
+	// Steps to check if attributes file is correct
+	// 1. Validate config path
+	if !isAttributesPathValid {
+		log.Printf("Start to check if attributes.xml path is valid in config")
+		isAttributesPathValid = verifyAttributesExist(attrPath)
+		if isAttributesPathValid {
+			attrPath = attrPath
+		}
+		log.Printf("Config path is %t", isAttributesPathValid)
+	}
+	// 2. If it not ok with config path - check regedit
+	if !isAttributesPathValid {
+		log.Printf("Start to check if attributes.xml path is valid in windows registry")
+		steamfolder := GetRegSteamFolderValue()
+		log.Printf("App folder in windows registry: %s", steamfolder)
+		isAttributesPathValid = verifyAttributesExist(steamfolder)
+		if isAttributesPathValid {
+			attrPath = steamfolder
+		}
+		log.Printf("Windows registry path is %t", isAttributesPathValid)
+		// Add save param into config
+	}
+	// 3. If hunt is not installed - show dialog with folder selection
+	if !isAttributesPathValid {
+		log.Printf("Start to check if attributes.xml path from directory selection window")
+		directorySelectDialogPath, err := dialog.Directory().SetStartDir(attrPath).Title("Find folder with attributes XML files").Browse()
+		if err != nil {
+			log.Print(err)
+		}
+		isAttributesPathValid = verifyAttributesExist(directorySelectDialogPath)
+		if isAttributesPathValid {
+			attrPath = directorySelectDialogPath
+		}
+	}
+
+	cfgFile.AttributesSettings.Path = attrPath
+	cfgFile.WriteConfigParamIntoFile("config.toml")
+
+	checkUpdatedAttributesFile(attrPath + cfgFile.AttributesSettings.Filename)
+	watchPath := attrPath + cfgFile.AttributesSettings.Filename
+	// 4. On updated config attribute path add it into watch path
+	dedup(watchPath)
+
+	// Database connection init
 	db := dbconnection()
 	dbcheckscheme(db)
 
+	// Tray icon and menu setup
 	mBrowseAttributes := systray.AddMenuItem("Set Attributes folder", "Set Attributes folder")
 	systray.AddSeparator()
 	mNotification := systray.AddMenuItemCheckbox("Notifications", "Show notifications with new results", true)
@@ -86,7 +135,6 @@ func onReady() {
 	}
 	systray.AddSeparator()
 	mQuit := systray.AddMenuItem("Quit", "Quits this app")
-
 	go func() {
 		for {
 			select {
@@ -137,18 +185,6 @@ func onReady() {
 			}
 		}
 	}()
-
-	if verifyAttributesExist(attrPath, cfgFile.AttributesSettings.Filename) {
-		AttributeXmlOpen(attrPath + cfgFile.AttributesSettings.Filename)
-	} else {
-		getAttributesFolder()
-	}
-
-	log.Printf("DEBUG MODE IS: %v", isDebug)
-
-	checkUpdatedAttributesFile(attrPath + cfgFile.AttributesSettings.Filename)
-	watchPath := attrPath + cfgFile.AttributesSettings.Filename
-	dedup(watchPath)
 }
 
 func onExit() {
@@ -165,8 +201,9 @@ func getIcon(s string) []byte {
 
 func getAttributesFolder() {
 	confFile := ReadConfig("config.toml")
+	filepath := fmt.Sprintf("%s%s", confFile.AttributesSettings.Path, confFile.AttributesSettings.Filename)
 	directorySelectDialog := dialog.Directory()
-	if !verifyAttributesExist(confFile.AttributesSettings.Path, confFile.AttributesSettings.Filename) {
+	if !verifyAttributesExist(filepath) {
 		directorySelectDialog.SetStartDir(GetRegSteamFolderValue())
 	}
 	directory, err := directorySelectDialog.Title("Find folder with attributes XML files").Browse()
@@ -190,11 +227,10 @@ func check(err error) {
 	}
 }
 
-func verifyAttributesExist(folderpath string, filename string) bool {
-	fullPath := folderpath + filename
-	_, err := os.Stat(fullPath)
+func verifyAttributesExist(folderpath string) bool {
+	_, err := os.Stat(folderpath)
 	if os.IsNotExist(err) {
-		log.Printf("File %s is not found at %s", filename, folderpath)
+		log.Printf("File attributes.xml is not found at %s", folderpath)
 		return false
 	}
 	return true
