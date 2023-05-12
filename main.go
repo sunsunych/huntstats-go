@@ -90,7 +90,6 @@ func onReady() {
 	dbcheckscheme(db)
 
 	// Tray icon and menu setup
-	log.Printf("Add notification checkbox menu")
 	mNotification := systray.AddMenuItemCheckbox("Notifications", "Show notifications with new results", true)
 	if cfgFile.Activity.Notifications {
 		mNotification.Check()

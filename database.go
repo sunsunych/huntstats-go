@@ -79,10 +79,8 @@ func saveNewMatchReport(m Match) {
 
 	//Get matchid record
 	isoldmatch, matchid := getmatchid(dbconn, m.MatchKey)
-	if isoldmatch {
-		log.Printf("Is OLD Match with MatchID: %d (No new records)", matchid)
-	} else {
-		log.Printf("Is NEW Match with MatchID: %d (Match records will be saved)", matchid)
+	if !isoldmatch {
+		log.Printf("Saving new match result")
 		savematchdata(dbconn, matchid, m)
 	}
 }
