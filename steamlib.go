@@ -17,15 +17,14 @@ type Libfolders struct {
 // var huntsteamappid = "594650"
 var huntprofilespath = "\\steamapps\\common\\Hunt Showdown\\user\\profiles\\default"
 
-func FindAttributesFolder(steamappspath string) string {
+func FindAttributesFolder(steamappspath string) (string, error) {
 	libfolders := SearchHuntAppFolder(steamappspath)
 	appspath := ""
 	temppath := ""
+	var err error
 	// log.Printf("libfolders length: %v", reflect.ValueOf(libfolders).Len())
 
-	if reflect.ValueOf(libfolders).Len() == 0 {
-		appspath = "C:\\"
-	} else {
+	if reflect.ValueOf(libfolders).Len() > 0 {
 		for _, value := range libfolders {
 			// libraryfolders
 			for _, v := range value.(map[string]interface{}) {
@@ -43,8 +42,9 @@ func FindAttributesFolder(steamappspath string) string {
 				}
 			}
 		}
+		return appspath, nil
 	}
-	return appspath
+	return "", err
 }
 
 func SearchHuntAppFolder(filepath string) map[string]interface{} {

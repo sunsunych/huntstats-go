@@ -1,6 +1,7 @@
 config.toml
 /history/*
 build/
+makefile
 
 *.db
 *.toml

@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"os"
+	"strings"
 
 	"github.com/pelletier/go-toml/v2"
 	"golang.org/x/sys/windows/registry"
@@ -41,6 +42,7 @@ func ReadConfig(filename string) configfile {
 }
 
 func (cfg configfile) WriteConfigParamIntoFile(filename string) {
+	cfg.AttributesSettings.Path = strings.TrimSuffix(cfg.AttributesSettings.Path, "\\attributes.xml")
 	b, err := toml.Marshal(cfg)
 	check(err)
 	fo, err := os.Create(filename)
@@ -61,7 +63,7 @@ func readFile(filename string) []byte {
 	return content
 }
 
-func GetRegSteamFolderValue() string {
+func GetRegSteamFolderValue() (string, error) {
 	winInfo, err := registry.OpenKey(registry.LOCAL_MACHINE, `SOFTWARE\WOW6432Node\Valve\Steam`, registry.QUERY_VALUE)
 	check(err)
 	defer winInfo.Close()
@@ -70,6 +72,9 @@ func GetRegSteamFolderValue() string {
 	LibFoldersVdf := SteamPath + "\\steamapps\\libraryfolders.vdf"
 	check(err)
 
-	attributesfolder := FindAttributesFolder(LibFoldersVdf)
-	return attributesfolder
+	attributesfolder, err := FindAttributesFolder(LibFoldersVdf)
+	if err != nil {
+		return "", err
+	}
+	return attributesfolder, nil
 }
