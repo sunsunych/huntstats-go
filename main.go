@@ -129,11 +129,13 @@ func onReady() {
 			case <-mNotification.ClickedCh:
 				if mNotification.Checked() {
 					mNotification.Uncheck()
+					cfgFile = ReadConfig("config.toml")
 					isNotificationEnabled = false
 					cfgFile.Activity.Notifications = false
 					cfgFile.WriteConfigParamIntoFile("config.toml")
 				} else {
 					mNotification.Check()
+					cfgFile = ReadConfig("config.toml")
 					isNotificationEnabled = true
 					cfgFile.Activity.Notifications = true
 					cfgFile.WriteConfigParamIntoFile("config.toml")
@@ -141,11 +143,13 @@ func onReady() {
 			case <-mSync.ClickedCh:
 				if mSync.Checked() {
 					mSync.Uncheck()
+					cfgFile = ReadConfig("config.toml")
 					isSendStatsEnabled = false
 					cfgFile.Activity.SendReports = false
 					cfgFile.WriteConfigParamIntoFile("config.toml")
 				} else {
 					mSync.Check()
+					cfgFile = ReadConfig("config.toml")
 					isSendStatsEnabled = true
 					cfgFile.Activity.SendReports = true
 					cfgFile.WriteConfigParamIntoFile("config.toml")

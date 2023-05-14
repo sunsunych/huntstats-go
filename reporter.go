@@ -27,14 +27,14 @@ func sendMatchReport(reporterid int, payload Match) {
 	contentType := "application/json"
 	data, err := json.Marshal(payload)
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 		return
 	}
 
 	client := &http.Client{}
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(data))
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 		return
 	}
 	req.Header.Add("Content-Type", contentType)
@@ -42,7 +42,7 @@ func sendMatchReport(reporterid int, payload Match) {
 
 	resp, err := client.Do(req)
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 		return
 	}
 	defer resp.Body.Close()

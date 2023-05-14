@@ -97,6 +97,7 @@ func AttributeXmlOpen(f string) Match {
 func IterateAttributesXML(attributeList Attributes) Match {
 	MatchData := new(Match)
 	MatchData.TeamsQty = attributeList.getTeamsAmount()
+	MatchData.MatchType = attributeList.getMatchType()
 	TeamsList := attributeList.getTeamsDetails(MatchData.TeamsQty)
 	MatchData.Teams = TeamsList
 	for _, v := range MatchData.Teams {
@@ -127,8 +128,8 @@ func (a *Attributes) getTeamsAmount() int {
 	return teamsInMatch
 }
 
-// Get matchtype amount in the match
-func (a *Attributes) getMatchTypeAmount() string {
+// Get matchtype in the match
+func (a *Attributes) getMatchType() string {
 	// teamsInMatch := 1
 	isQuickPlay := false
 	isTutorial := false
