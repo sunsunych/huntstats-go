@@ -125,6 +125,7 @@ func (a *Attributes) getTeamsAmount() int {
 			teamsInMatch, _ = strconv.Atoi(attrRecord.NameValue)
 		}
 	}
+	fmt.Printf("Teams in match: %d\n", teamsInMatch)
 	return teamsInMatch
 }
 
@@ -209,6 +210,7 @@ func (a *Attributes) getTeamsDetails(teamsQty int) []Team {
 			}
 		}
 	}
+	fmt.Printf("%v", Teams)
 	return Teams
 }
 
@@ -267,9 +269,9 @@ func (a *Attributes) getPlayersDetailsForTeam(teamIndex int, playersQty int) []P
 			}
 		}
 	}
-	// for i, plr := range Players {
-	// log.Printf("Team [%d] | Player [%d]: %s - %d MMR", teamIndex, i, plr.PlayerName, plr.PlayerMMR)
-	// }
+	for i, plr := range Players {
+		fmt.Printf("\nTeam [%d] | Player [%d]: %s - %d MMR", teamIndex, i, plr.PlayerName, plr.PlayerMMR)
+	}
 	return Players
 }
 
