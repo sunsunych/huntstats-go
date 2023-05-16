@@ -5,6 +5,8 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"os/exec"
+	"runtime"
 	"strconv"
 
 	"github.com/getlantern/systray"
@@ -17,6 +19,7 @@ var isDebugParam = "false"
 
 var HashSaltParam string
 var ReportServer string
+var ProfileServer string
 
 func main() {
 	systray.Run(onReady, onExit)
@@ -38,9 +41,11 @@ func onReady() {
 	isDebug, _ := strconv.ParseBool(isDebugParam)
 	if isDebug {
 		ReportServer = "http://127.0.0.1:3000"
+		ProfileServer = "http://localhost:5173"
 		log.Printf("[DEBUG MODE ENABLED]")
 	} else {
 		ReportServer = "https://api.scopestats.com"
+		ProfileServer = "https://scopestats.com"
 	}
 
 	// Hash parameter setup
@@ -103,19 +108,23 @@ func onReady() {
 		mSync.Uncheck()
 	}
 	mReportername := systray.AddMenuItem("- Unkown reporter -", "Click to update")
+	mOnlineProfile := systray.AddMenuItem("My profile on Scopestats", "Open my scopestats profile")
 	if cfgFile.Activity.Reporter != 0 {
 		playername, err := getPlayerNameByID(cfgFile.Activity.Reporter)
 		if err != nil {
 			mReportername.Hide()
+			mOnlineProfile.Hide()
 		}
 		playermmr, err := getPlayerMMRByID(cfgFile.Activity.Reporter)
 		if err != nil {
 			mReportername.Hide()
+			mOnlineProfile.Hide()
 		}
 		if playername != "" && playermmr > 0 {
 			titleStr := fmt.Sprintf("%s - [%d]", playername, playermmr)
 			mReportername.SetTitle(titleStr)
 			mReportername.Show()
+			mOnlineProfile.Show()
 		}
 	}
 	if cfgFile.Activity.Reporter == 0 {
@@ -168,6 +177,11 @@ func onReady() {
 						titleStr := fmt.Sprintf("%s - [%d]", playername, playermmr)
 						mReportername.SetTitle(titleStr)
 					}
+				}
+			case <-mOnlineProfile.ClickedCh:
+				if cfgFile.Activity.Reporter != 0 {
+					profileLink := buildReporterProfileLink(cfgFile.Activity.Reporter)
+					openProfile(profileLink)
 				}
 			case <-mQuit.ClickedCh:
 				systray.Quit()
@@ -234,4 +248,21 @@ func verifyAttributesExist(filepath string) bool {
 		return false
 	}
 	return true
+}
+
+func openProfile(url string) error {
+	var cmd string
+	var args []string
+
+	switch runtime.GOOS {
+	case "windows":
+		cmd = "cmd"
+		args = []string{"/c", "start"}
+	case "darwin":
+		cmd = "open"
+	default: // "linux", "freebsd", "openbsd", "netbsd"
+		cmd = "xdg-open"
+	}
+	args = append(args, url)
+	return exec.Command(cmd, args...).Start()
 }

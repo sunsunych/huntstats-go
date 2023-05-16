@@ -100,16 +100,11 @@ func IterateAttributesXML(attributeList Attributes) Match {
 	MatchData.MatchType = attributeList.getMatchType()
 	TeamsList := attributeList.getTeamsDetails(MatchData.TeamsQty)
 	MatchData.Teams = TeamsList
-	for tid, v := range MatchData.Teams {
+	for _, v := range MatchData.Teams {
 		teamID := v.TeamID
 		playersQty := v.PlayersQty
 		playersSlice := attributeList.getPlayersDetailsForTeam(teamID, playersQty)
-		fmt.Printf("\nPlayerSlice for Team[%d - %d]\n%v\n", teamID, tid, playersSlice)
 		teamIndex := getTeamIndexByID(*MatchData, teamID)
-		// fmt.Printf("\nAssign %d player(s) to TeamID %d with index %d\n", playersQty, teamID, teamIndex)
-		// for _, player := range playersSlice {
-		// 	fmt.Printf("Player: %s - MMR %d\n", player.PlayerName, player.PlayerMMR)
-		// }
 		MatchData.Teams[teamIndex].Players = playersSlice
 	}
 	MatchData.MatchKey = hashMatchKey(MatchData.Teams)
@@ -131,7 +126,6 @@ func (a *Attributes) getTeamsAmount() int {
 			teamsInMatch, _ = strconv.Atoi(attrRecord.NameValue)
 		}
 	}
-	fmt.Printf("Teams in match: %d\n", teamsInMatch)
 	return teamsInMatch
 }
 
@@ -191,98 +185,56 @@ func (a *Attributes) getAccoladesAmount() int {
 
 // Get details for each team
 func (a *Attributes) getTeamsDetails(teamsQty int) []Team {
-	AltTeams := make([]Team, teamsQty)
-	teamData := Team{}
-	teamData.TeamID = 0
+	Teams := make([]Team, teamsQty)
 
 	for _, attrRecord := range a.Attr {
 		if strings.HasPrefix(attrRecord.NameKey, "MissionBagTeam_") {
 			teamIndex, _ := getTeamIndexFromKey(attrRecord.NameKey)
 			if teamIndex < teamsQty {
-				AltTeams[teamIndex].TeamID = teamIndex
+				Teams[teamIndex].TeamID = teamIndex
 				AttrName, AttrValue := getTeamAttributeAndValue(attrRecord)
 				if AttrName != "" {
 					switch AttrName {
 					case "mmr":
-						AltTeams[teamIndex].TeamMMR, _ = strconv.Atoi(AttrValue)
+						Teams[teamIndex].TeamMMR, _ = strconv.Atoi(AttrValue)
 					case "numplayers":
-						AltTeams[teamIndex].PlayersQty, _ = strconv.Atoi(AttrValue)
+						Teams[teamIndex].PlayersQty, _ = strconv.Atoi(AttrValue)
 					case "ownteam":
-						AltTeams[teamIndex].IsOwn, _ = strconv.ParseBool(AttrValue)
+						Teams[teamIndex].IsOwn, _ = strconv.ParseBool(AttrValue)
 					}
 				}
 			}
 		}
 	}
-	for k, v := range AltTeams {
-		fmt.Printf("\nTeam Index: %d", k)
-		fmt.Printf(" - Team ID: %v\n", v.TeamID)
-		fmt.Printf("Team MMR: %d\n", v.TeamMMR)
-		fmt.Printf("Is Own?: %v\n", v.IsOwn)
-		fmt.Printf("Players Qty: %d\n", v.PlayersQty)
-		fmt.Printf("Players List: %v\n", v.Players)
-	}
-	return AltTeams
+	return Teams
 }
 
 // Get details for each player
 func (a *Attributes) getPlayersDetailsForTeam(teamIndex int, playersQty int) []Player {
-	Players := []Player{}
-	playerData := Player{}
-	playerIter := 0
-	teamIter := 0
+	Players := make([]Player, playersQty)
 
 	for _, attrRecord := range a.Attr {
 		if strings.HasPrefix(attrRecord.NameKey, "MissionBagPlayer_") {
 			teamIdx, playerIdx := getPlayerTeamAndIndexFromKey(attrRecord.NameKey)
 			if teamIdx >= 0 || playerIdx >= 0 {
-				if ((playerIter != playerIdx) && (teamIdx == teamIndex)) && (playerIter < playersQty) {
-					//We need to save team into teams slice, before assigning new teamIndex
-					if playerData.ProfileID != 0 {
-						Players = append(Players, playerData)
-					}
-					playerIter = playerIdx
-					teamIter = teamIdx
-					playerData = Player{}
-				}
-
-				if (teamIter != teamIdx) && (teamIdx == teamIndex) {
-					//We need to save team into teams slice, before assigning new teamIndex
-					if playerData.ProfileID != 0 {
-						Players = append(Players, playerData)
-					}
-					playerIter = playerIdx
-					teamIter = teamIdx
-					playerData = Player{}
-				}
-				if (playerIter <= playersQty) && (teamIter == teamIndex) {
+				if (playerIdx < playersQty) && (teamIdx == teamIndex) {
 					AttrName, AttrValue := getPlayerAttributeAndValue(attrRecord)
-
-					v := reflect.ValueOf(&playerData)
-
-					for i := 0; i < reflect.Indirect(v).NumField(); i++ {
-						field := reflect.Indirect(v).Field(i)
-						tag := reflect.Indirect(v).Type().Field(i).Tag.Get("hunttag")
-						if (tag == AttrName) && (tag != "") {
-							switch reflect.Indirect(v).Field(i).Type().Name() {
-							case "int":
-								convertedValue, _ := strconv.Atoi(AttrValue)
-								field.Set(reflect.ValueOf(convertedValue))
-							case "bool":
-								convertedValue, _ := strconv.ParseBool(AttrValue)
-								field.Set(reflect.ValueOf(convertedValue))
-							default:
-								field.Set(reflect.ValueOf(AttrValue))
-							}
+					if AttrName != "" {
+						switch AttrName {
+						case "profileid":
+							Players[playerIdx].ProfileID, _ = strconv.Atoi(AttrValue)
+						case "mmr":
+							Players[playerIdx].PlayerMMR, _ = strconv.Atoi(AttrValue)
+						case "blood":
+							Players[playerIdx].PlayerName = AttrValue
+						case "ispartner":
+							Players[playerIdx].IsPartner, _ = strconv.ParseBool(AttrValue)
 						}
 					}
 				}
 			}
 		}
 	}
-	// for i, plr := range Players {
-	// 	fmt.Printf("\nTeam [IDX: %d - Iter: %d] | Player [%d]: %s - %d MMR", teamIndex, teamIter, i, plr.PlayerName, plr.PlayerMMR)
-	// }
 	return Players
 }
 
