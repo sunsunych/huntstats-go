@@ -4,11 +4,18 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 
 	"github.com/speps/go-hashids/v2"
 )
+
+type ApiResponseMessage struct {
+	Status  int    `json:"status"`
+	Message string `json:"message"`
+	Path    string `json:"path"`
+}
 
 func sendMatchReport(reporterid int, payload Match) {
 	reporterKey := buildReporterHash(reporterid)
@@ -35,7 +42,11 @@ func sendMatchReport(reporterid int, payload Match) {
 		log.Println(err)
 		return
 	}
-	log.Printf("Response Code: %s | Response Body: %s", resp.StatusCode, resp.Body)
+	var respBodyJson = ApiResponseMessage{}
+
+	respBodyByte, _ := ioutil.ReadAll(resp.Body)
+	json.Unmarshal(respBodyByte, &respBodyJson)
+	log.Printf("Response Code: %d - %s", resp.StatusCode, respBodyJson.Message)
 	defer resp.Body.Close()
 }
 
