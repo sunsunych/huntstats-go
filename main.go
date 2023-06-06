@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -36,6 +37,13 @@ func onReady() {
 	}
 	defer f.Close()
 	log.SetOutput(f)
+
+	// Check if app is running
+	isRunning := appIsRunning("huntstats.exe")
+	if isRunning {
+		dialog.Message("Application is already running").Title("Application is running").Error()
+		systray.Quit()
+	}
 
 	// Check isDebug param
 	isDebug, _ := strconv.ParseBool(isDebugParam)
@@ -265,4 +273,13 @@ func openProfile(url string) error {
 	}
 	args = append(args, url)
 	return exec.Command(cmd, args...).Start()
+}
+
+func appIsRunning(appname string) bool {
+	cmd := exec.Command("TASKLIST", "/FI", fmt.Sprintf("IMAGENAME eq %s", appname))
+	result, err := cmd.Output()
+	if err != nil {
+		return false
+	}
+	return !bytes.Contains(result, []byte("No tasks are running"))
 }
