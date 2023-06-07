@@ -9,6 +9,8 @@ import (
 	"os/exec"
 	"runtime"
 	"strconv"
+	"syscall"
+	"unsafe"
 
 	"github.com/getlantern/systray"
 	"github.com/sqweek/dialog"
@@ -21,6 +23,11 @@ var isDebugParam = "false"
 var HashSaltParam string
 var ReportServer string
 var ProfileServer string
+
+var (
+	kernel32        = syscall.NewLazyDLL("kernel32.dll")
+	procCreateMutex = kernel32.NewProc("CreateMutexW")
+)
 
 func main() {
 	systray.Run(onReady, onExit)
@@ -38,12 +45,20 @@ func onReady() {
 	defer f.Close()
 	log.SetOutput(f)
 
-	// Check if app is running
-	isRunning := appIsRunning("huntstats.exe")
-	if isRunning {
+	// mutexName starting with "Global\" will work across all user sessions
+	_, err = CreateMutex("HUNTSTATS")
+	if err != nil {
+		log.Printf("copy app is already running: %v", err)
 		dialog.Message("Application is already running").Title("Application is running").Error()
 		systray.Quit()
 	}
+
+	// Check if app is running
+	// isRunning := appIsRunning("huntstats.exe")
+	// if isRunning {
+	// 	dialog.Message("Application is already running").Title("Application is running").Error()
+	// 	systray.Quit()
+	// }
 
 	// Check isDebug param
 	isDebug, _ := strconv.ParseBool(isDebugParam)
@@ -282,4 +297,18 @@ func appIsRunning(appname string) bool {
 		return false
 	}
 	return !bytes.Contains(result, []byte("No tasks are running"))
+}
+
+func CreateMutex(name string) (uintptr, error) {
+	ret, _, err := procCreateMutex.Call(
+		0,
+		0,
+		uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(name))),
+	)
+	switch int(err.(syscall.Errno)) {
+	case 0:
+		return ret, nil
+	default:
+		return ret, err
+	}
 }
