@@ -1,8 +1,10 @@
 config.toml
 /history/*
-build/
+/release/*
+/build/*
 makefile
 
 *.db
 *.toml
 *.log
+*.exe
