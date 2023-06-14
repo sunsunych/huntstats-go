@@ -254,8 +254,7 @@ func (a *Attributes) getEventsForMatch(m *Match) []MatchEvent {
 		{"killedme", "_killed"},
 		{"killedteammate", "_killed"},
 	}
-	for i := 0; i < m.TeamsQty-1; i++ {
-		// log.Printf("Get events for Team [%d]", i)
+	for i := 0; i <= m.TeamsQty-1; i++ {
 		if len(m.Teams) > 0 {
 			for pn, plr := range m.Teams[i].Players {
 				playerID := plr.ProfileID

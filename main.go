@@ -53,13 +53,6 @@ func onReady() {
 		systray.Quit()
 	}
 
-	// Check if app is running
-	// isRunning := appIsRunning("huntstats.exe")
-	// if isRunning {
-	// 	dialog.Message("Application is already running").Title("Application is running").Error()
-	// 	systray.Quit()
-	// }
-
 	// Check isDebug param
 	isDebug, _ := strconv.ParseBool(isDebugParam)
 	if isDebug {
