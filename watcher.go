@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"math"
 	"os"
@@ -8,8 +9,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/electricbubble/go-toast"
 	"github.com/fsnotify/fsnotify"
-	"github.com/gen2brain/beeep"
 )
 
 func dedup(paths ...string) {
@@ -98,11 +99,16 @@ func checkUpdatedAttributesFile(filepath string) {
 	config := ReadConfig("config.toml")
 	if matchdata.MatchKey != config.Activity.LastSavedKeyHash && len(matchdata.MatchKey) > 0 {
 		if isNotificationEnabled {
+			appName := fmt.Sprintf("Huntstats v%s", appVersion)
 			msg := buildNotificationMessageBody(matchdata)
-			err := beeep.Notify("Latest match result", msg, "assets/icon.png")
-			if err != nil {
-				log.Printf("Notifier error: %s", err)
-			}
+			_ = toast.Push(msg,
+				toast.WithTitle("*Latest match*"),
+				toast.WithAppID(appName),
+			)
+			// err := beeep.Notify("Latest match result", msg, "assets/icon.png")
+			// if err != nil {
+			// 	log.Printf("Notifier error: %s", err)
+			// }
 		}
 		config.Activity.LastSavedKeyHash = matchdata.MatchKey
 		config.WriteConfigParamIntoFile("config.toml")

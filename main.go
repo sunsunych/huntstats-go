@@ -16,6 +16,8 @@ import (
 	"github.com/sqweek/dialog"
 )
 
+var appVersion = "0.1.5"
+
 var isNotificationEnabled = false
 var isSendStatsEnabled = false
 var isDebugParam = "false"

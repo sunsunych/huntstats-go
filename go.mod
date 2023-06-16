@@ -12,6 +12,8 @@ require (
 	golang.org/x/sys v0.7.0
 )
 
+require github.com/electricbubble/go-toast v0.3.0 // indirect
+
 require (
 	github.com/TheTitanrain/w32 v0.0.0-20180517000239-4f5cfb03fabf // indirect
 	github.com/gen2brain/beeep v0.0.0-20230307103607-6e717729cb4f // indirect
@@ -28,4 +30,5 @@ require (
 	github.com/nu7hatch/gouuid v0.0.0-20131221200532-179d4d0c4d8d // indirect
 	github.com/oxtoacart/bpool v0.0.0-20190530202638-03653db5a59c // indirect
 	github.com/tadvi/systray v0.0.0-20190226123456-11a2b8fa57af // indirect
+	gopkg.in/toast.v1 v1.0.0-20180812000517-0a84660828b2
 )
