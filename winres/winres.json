@@ -39,22 +39,22 @@
     "#1": {
       "0000": {
         "fixed": {
-          "file_version": "0.0.0.2",
-          "product_version": "0.0.0.2"
+          "file_version": "0.1.6",
+          "product_version": "0.1.6"
         },
         "info": {
           "0409": {
             "Comments": "",
             "CompanyName": "SunTeam",
             "FileDescription": "",
-            "FileVersion": "0.0.0.2",
+            "FileVersion": "0.1.6",
             "InternalName": "HuntStats",
             "LegalCopyright": "",
             "LegalTrademarks": "",
             "OriginalFilename": "",
             "PrivateBuild": "",
             "ProductName": "HuntStats",
-            "ProductVersion": "0.0.0.2",
+            "ProductVersion": "0.1.6",
             "SpecialBuild": ""
           }
         }

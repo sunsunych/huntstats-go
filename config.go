@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/pelletier/go-toml/v2"
@@ -28,10 +29,13 @@ type (
 	}
 )
 
-func ReadConfig(filename string) configfile {
+func ReadConfig() configfile {
 	var cfg configfile
 
-	f := readFile(filename)
+	userDir, _ := os.UserConfigDir()
+	configFilePath := filepath.Join(userDir, "huntstats", "config.toml")
+
+	f := readFile(configFilePath)
 
 	err := toml.Unmarshal(f, &cfg)
 	check(err)
@@ -41,11 +45,13 @@ func ReadConfig(filename string) configfile {
 	return cfg
 }
 
-func (cfg configfile) WriteConfigParamIntoFile(filename string) {
+func (cfg configfile) WriteConfigParamIntoFile() {
+	userDir, _ := os.UserConfigDir()
+	configFilePath := filepath.Join(userDir, "huntstats", "config.toml")
 	cfg.AttributesSettings.Path = strings.TrimSuffix(cfg.AttributesSettings.Path, "\\attributes.xml")
 	b, err := toml.Marshal(cfg)
 	check(err)
-	fo, err := os.Create(filename)
+	fo, err := os.Create(configFilePath)
 	check(err)
 	defer func() {
 		if err := fo.Close(); err != nil {

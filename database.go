@@ -4,11 +4,10 @@ import (
 	"database/sql"
 	"log"
 	"os"
+	"path/filepath"
 
 	_ "github.com/mattn/go-sqlite3"
 )
-
-var dbpath = "./data/matchdata.db"
 
 // List of games played by teammates
 type TeamisownList struct {
@@ -18,9 +17,16 @@ type TeamisownList struct {
 }
 
 func dbconnection() *sql.DB {
-	checkdbexist()
+	// var dbpath = "./data/matchdata.db"
 
-	db, err := sql.Open("sqlite3", dbpath)
+	//NEW DB PATH
+	userDir, _ := os.UserConfigDir()
+	dbFolderPath := filepath.Join(userDir, "huntstats", "data")
+	dbFilePatch := filepath.Join(dbFolderPath, "matchdata.db")
+
+	checkdbexist(dbFolderPath, dbFilePatch)
+
+	db, err := sql.Open("sqlite3", dbFilePatch)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -94,6 +100,17 @@ func getPlayersTeamIsOwnList() ([]TeamisownList, error) {
 		return nil, err
 	}
 	return tiol, nil
+}
+
+// Get playerid from latest solo game
+func getPlayerIDFromLatestSolo() (int, error) {
+	dbconn := dbconnection()
+
+	plrid, err := getProfileFromLatestSoloGame(dbconn)
+	if err != nil {
+		return 0, err
+	}
+	return plrid, nil
 }
 
 func getmatchid(db *sql.DB, k string) (bool, int) {
@@ -198,6 +215,30 @@ func getTeamIsOwnPlayers(db *sql.DB) ([]TeamisownList, error) {
 	return PlayerIsOwnList, nil
 }
 
+func getProfileFromLatestSoloGame(db *sql.DB) (int, error) {
+	var plrid int
+	var mrec int
+	sqlStmt := "with playerdata as (select tp.matchrecord, tp.teamisown, tp.profileid, count(*) OVER (partition by tp.teamid, tp.matchrecord) AS playersinteam FROM teamplayer as tp where tp.teamisown=1) select matchrecord, profileid from playerdata where playersinteam=1 order by matchrecord limit 1"
+	rows, err := db.Query(sqlStmt)
+	if err != nil {
+		return 0, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		if err := rows.Scan(&mrec, &plrid); err != nil {
+			return 0, err
+		}
+		return plrid, nil
+	}
+
+	if err = rows.Err(); err != nil {
+		return 0, err
+	}
+
+	return plrid, nil
+}
+
 func getPlayerNameByID(playerid int) (string, error) {
 	db := dbconnection()
 	var playername string
@@ -230,10 +271,10 @@ func checkErr(err error) {
 	}
 }
 
-func checkdbexist() {
-	_, err := os.Stat(dbpath)
+func checkdbexist(dbpath string, dbfile string) {
+	_, err := os.Stat(dbfile)
 	if os.IsNotExist(err) {
-		os.MkdirAll("./data", 0755)
-		os.Create(dbpath)
+		os.MkdirAll(dbpath, 0755)
+		os.Create(dbfile)
 	}
 }

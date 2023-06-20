@@ -1,24 +1,27 @@
+#define AppName "Huntstats"
+#define AppVersion "0.1.6"
+#define AppExeName "huntstats.exe"
+#define AppPublisher "ScopesStats"
+
 [Files]
-Source: "release\huntstats.exe"; DestDir: "{app}"; Components: main
-Source: "release\config.toml"; DestDir: "{app}"; Flags: onlyifdoesntexist
+Source: "release\{#AppExeName}"; DestDir: "{app}";
+Source: "release\config.toml"; DestDir: "{userappdata}\huntstats\"; Flags: onlyifdoesntexist
 Source: "release\assets\*"; DestDir: "{app}\assets\"
 
-[Components]
-Name: "main"; Description: "Main Files"; Types: full compact custom; Flags: fixed
-
 [Setup]
-AppName=Huntstats
-AppVersion=0.1.5
-AppPublisher=Scopestats
+AppName={#AppName}
+AppVersion={#AppVersion}
+AppPublisher={#AppPublisher}
 WizardStyle=modern
 UsePreviousAppDir=yes
 DefaultDirName={autopf}\huntstats
 DefaultGroupName=Huntstats
-UninstallDisplayIcon={app}\huntstats.exe
+UninstallDisplayIcon={app}\{#AppExeName}
 Compression=lzma2
 SolidCompression=yes
 OutputBaseFilename=huntstats_installer
 OutputDir="release"
+SignTool=Huntstats $f
 
-[Tasks]
-Name: desktopicon; Description: "Create a &desktop icon"; GroupDescription: "Additional icons:"
+[Icons]
+Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExeName}"
