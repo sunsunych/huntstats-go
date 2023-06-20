@@ -3,10 +3,12 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"runtime"
 	"strconv"
 	"syscall"
@@ -16,7 +18,7 @@ import (
 	"github.com/sqweek/dialog"
 )
 
-var appVersion = "0.1.5"
+var appVersion = "0.1.6"
 
 var isNotificationEnabled = false
 var isSendStatsEnabled = false
@@ -36,11 +38,14 @@ func main() {
 }
 
 func onReady() {
+	settingsMigrationCheck()
 	systray.SetIcon(getIcon("assets/appicon.ico"))
-	cfgFile := ReadConfig("config.toml")
+	cfgFile := ReadConfig()
 
 	// Logfile setup
-	f, err := os.OpenFile("events.log", os.O_APPEND|os.O_CREATE|os.O_RDWR, 0666)
+	userDir, _ := os.UserConfigDir()
+	logFilePath := filepath.Join(userDir, "huntstats", "events.log")
+	f, err := os.OpenFile(logFilePath, os.O_APPEND|os.O_CREATE|os.O_RDWR, 0666)
 	if err != nil {
 		fmt.Printf("error opening file: %v", err)
 	}
@@ -156,30 +161,30 @@ func onReady() {
 			case <-mNotification.ClickedCh:
 				if mNotification.Checked() {
 					mNotification.Uncheck()
-					cfgFile = ReadConfig("config.toml")
+					cfgFile = ReadConfig()
 					isNotificationEnabled = false
 					cfgFile.Activity.Notifications = false
-					cfgFile.WriteConfigParamIntoFile("config.toml")
+					cfgFile.WriteConfigParamIntoFile()
 				} else {
 					mNotification.Check()
-					cfgFile = ReadConfig("config.toml")
+					cfgFile = ReadConfig()
 					isNotificationEnabled = true
 					cfgFile.Activity.Notifications = true
-					cfgFile.WriteConfigParamIntoFile("config.toml")
+					cfgFile.WriteConfigParamIntoFile()
 				}
 			case <-mSync.ClickedCh:
 				if mSync.Checked() {
 					mSync.Uncheck()
-					cfgFile = ReadConfig("config.toml")
+					cfgFile = ReadConfig()
 					isSendStatsEnabled = false
 					cfgFile.Activity.SendReports = false
-					cfgFile.WriteConfigParamIntoFile("config.toml")
+					cfgFile.WriteConfigParamIntoFile()
 				} else {
 					mSync.Check()
-					cfgFile = ReadConfig("config.toml")
+					cfgFile = ReadConfig()
 					isSendStatsEnabled = true
 					cfgFile.Activity.SendReports = true
-					cfgFile.WriteConfigParamIntoFile("config.toml")
+					cfgFile.WriteConfigParamIntoFile()
 				}
 			case <-mReportername.ClickedCh:
 				if cfgFile.Activity.Reporter != 0 {
@@ -210,7 +215,7 @@ func onReady() {
 
 	if isAttributesPathValid {
 		cfgFile.AttributesSettings.Path = attrPath
-		cfgFile.WriteConfigParamIntoFile("config.toml")
+		cfgFile.WriteConfigParamIntoFile()
 		checkUpdatedAttributesFile(attrPath)
 		dedup(attrPath)
 	} else {
@@ -232,7 +237,7 @@ func getIcon(s string) []byte {
 
 func getAttributesFolder(startpath string) {
 	log.Printf("Init new attributes folder to watch. Start exploring from: %s", startpath)
-	confFile := ReadConfig("config.toml")
+	confFile := ReadConfig()
 	// filepath := fmt.Sprintf("%s%s", confFile.AttributesSettings.Path, confFile.AttributesSettings.Filename)
 	directorySelectDialog := dialog.Directory().SetStartDir(startpath)
 	directory, err := directorySelectDialog.Title("Find folder with attributes XML files").Browse()
@@ -241,15 +246,15 @@ func getAttributesFolder(startpath string) {
 	} else {
 		log.Printf("Selected directory: %s", directory)
 		setAttributesFolderByBrowse(directory)
-		confFile.WriteConfigParamIntoFile("config.toml")
+		confFile.WriteConfigParamIntoFile()
 	}
 }
 
 func setAttributesFolderByBrowse(p string) {
 	log.Printf("Path %s will be saved as folder with attributes.xml", p)
-	confFile := ReadConfig("config.toml")
+	confFile := ReadConfig()
 	confFile.AttributesSettings.Path = p
-	confFile.WriteConfigParamIntoFile("config.toml")
+	confFile.WriteConfigParamIntoFile()
 }
 
 func check(err error) {
@@ -259,7 +264,6 @@ func check(err error) {
 }
 
 func verifyAttributesExist(filepath string) bool {
-	log.Printf("Start verifying if attributes is exist using path: %s", filepath)
 	_, err := os.Stat(filepath)
 	if os.IsNotExist(err) {
 		log.Printf("File attributes.xml is not found at %s", filepath)
@@ -306,4 +310,71 @@ func CreateMutex(name string) (uintptr, error) {
 	default:
 		return ret, err
 	}
+}
+
+func settingsMigrationCheck() {
+	userDir, _ := os.UserConfigDir()
+	configFilePath := filepath.Join("makefile")
+	dbFilePath := filepath.Join("data", "matchdata.db")
+
+	filepaths := [2]string{configFilePath, dbFilePath}
+	for _, fp := range filepaths {
+		newFullPath := filepath.Join(userDir, "huntstats", fp)
+		_, err := os.Stat(fp)
+		if os.IsNotExist(err) {
+			if isDebugParam == "true" {
+				log.Printf("File %s is not found or is already migrated", fp)
+			}
+		} else {
+			_, err = os.Stat(newFullPath)
+			if os.IsNotExist(err) {
+				userDirFolder := filepath.Join(userDir, "huntstats")
+				os.MkdirAll(userDirFolder, 0755)
+				dbDirFolder := filepath.Join(userDir, "huntstats", "data")
+				os.MkdirAll(dbDirFolder, 0755)
+			}
+			err = MoveFile(fp, newFullPath)
+			if err != nil {
+				log.Print(err)
+			}
+		}
+	}
+}
+
+func MoveFile(source, destination string) (err error) {
+	src, err := os.Open(source)
+	if err != nil {
+		return err
+	}
+	defer src.Close()
+	fi, err := src.Stat()
+	if err != nil {
+		return err
+	}
+	flag := os.O_WRONLY | os.O_CREATE | os.O_TRUNC
+	perm := fi.Mode() & os.ModePerm
+	dst, err := os.OpenFile(destination, flag, perm)
+	if err != nil {
+		return err
+	}
+	defer dst.Close()
+	_, err = io.Copy(dst, src)
+	if err != nil {
+		dst.Close()
+		os.Remove(destination)
+		return err
+	}
+	err = dst.Close()
+	if err != nil {
+		return err
+	}
+	err = src.Close()
+	if err != nil {
+		return err
+	}
+	err = os.Remove(source)
+	if err != nil {
+		return err
+	}
+	return nil
 }

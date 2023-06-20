@@ -96,7 +96,7 @@ func dedupLoop(w *fsnotify.Watcher) {
 
 func checkUpdatedAttributesFile(filepath string) {
 	matchdata := AttributeXmlOpen(filepath)
-	config := ReadConfig("config.toml")
+	config := ReadConfig()
 	if matchdata.MatchKey != config.Activity.LastSavedKeyHash && len(matchdata.MatchKey) > 0 {
 		if isNotificationEnabled {
 			appName := fmt.Sprintf("Huntstats v%s", appVersion)
@@ -111,7 +111,7 @@ func checkUpdatedAttributesFile(filepath string) {
 			// }
 		}
 		config.Activity.LastSavedKeyHash = matchdata.MatchKey
-		config.WriteConfigParamIntoFile("config.toml")
+		config.WriteConfigParamIntoFile()
 		saveNewMatchReport(matchdata)
 		if config.Activity.Reporter == 0 {
 			if identifyReporter() && isSendStatsEnabled == true {

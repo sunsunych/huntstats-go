@@ -1,11 +1,11 @@
 #define AppName "Huntstats"
-#define AppVersion "0.1.4"
+#define AppVersion "0.1.6"
 #define AppExeName "huntstats.exe"
 #define AppPublisher "ScopesStats"
 
 [Files]
 Source: "release\{#AppExeName}"; DestDir: "{app}";
-Source: "release\config.toml"; DestDir: "{app}"; Flags: onlyifdoesntexist
+Source: "release\config.toml"; DestDir: "{userappdata}\huntstats\"; Flags: onlyifdoesntexist
 Source: "release\assets\*"; DestDir: "{app}\assets\"
 
 [Setup]

@@ -428,6 +428,11 @@ func hashMatchKey(teams []Team) string {
 // }
 
 func identifyReporter() bool {
+	latestSoloID, _ := getPlayerIDFromLatestSolo()
+	if latestSoloID != 0 {
+		setReporterID(latestSoloID)
+		return true
+	}
 	tiol, err := getPlayersTeamIsOwnList()
 	if err != nil {
 		log.Printf("Error: %v", err)
@@ -449,7 +454,7 @@ func identifyReporter() bool {
 
 // get IdentytyID integer
 func getReporterID() int {
-	cfgFile := ReadConfig("config.toml")
+	cfgFile := ReadConfig()
 	if cfgFile.Activity.Reporter != 0 {
 		return cfgFile.Activity.Reporter
 	} else {
@@ -459,7 +464,7 @@ func getReporterID() int {
 
 // set IdentytyID integer
 func setReporterID(reporterid int) {
-	cfgFile := ReadConfig("config.toml")
+	cfgFile := ReadConfig()
 	cfgFile.Activity.Reporter = reporterid
-	cfgFile.WriteConfigParamIntoFile("config.toml")
+	cfgFile.WriteConfigParamIntoFile()
 }
