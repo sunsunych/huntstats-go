@@ -3,10 +3,12 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"runtime"
 	"strconv"
 	"syscall"
@@ -36,6 +38,7 @@ func main() {
 }
 
 func onReady() {
+	settingsMigrationCheck()
 	systray.SetIcon(getIcon("assets/appicon.ico"))
 	cfgFile := ReadConfig("config.toml")
 
@@ -259,7 +262,6 @@ func check(err error) {
 }
 
 func verifyAttributesExist(filepath string) bool {
-	log.Printf("Start verifying if attributes is exist using path: %s", filepath)
 	_, err := os.Stat(filepath)
 	if os.IsNotExist(err) {
 		log.Printf("File attributes.xml is not found at %s", filepath)
@@ -306,4 +308,60 @@ func CreateMutex(name string) (uintptr, error) {
 	default:
 		return ret, err
 	}
+}
+
+func settingsMigrationCheck() {
+	userDir, _ := os.UserConfigDir()
+	configFilePath := filepath.Join("makefile")
+	dbFilePath := filepath.Join("data", "makefile.txt")
+
+	filepaths := [2]string{configFilePath, dbFilePath}
+	for _, fp := range filepaths {
+		newFullPath := filepath.Join(userDir, "huntstats", fp)
+		log.Printf("I will migrate file: %s to %s", fp, newFullPath)
+		_, err := os.Stat(fp)
+		if os.IsNotExist(err) {
+			log.Printf("File %s is not found", fp)
+
+		}
+		MoveFile(fp, newFullPath)
+	}
+}
+
+func MoveFile(source, destination string) (err error) {
+	src, err := os.Open(source)
+	if err != nil {
+		return err
+	}
+	defer src.Close()
+	fi, err := src.Stat()
+	if err != nil {
+		return err
+	}
+	flag := os.O_WRONLY | os.O_CREATE | os.O_TRUNC
+	perm := fi.Mode() & os.ModePerm
+	dst, err := os.OpenFile(destination, flag, perm)
+	if err != nil {
+		return err
+	}
+	defer dst.Close()
+	_, err = io.Copy(dst, src)
+	if err != nil {
+		dst.Close()
+		os.Remove(destination)
+		return err
+	}
+	err = dst.Close()
+	if err != nil {
+		return err
+	}
+	err = src.Close()
+	if err != nil {
+		return err
+	}
+	err = os.Remove(source)
+	if err != nil {
+		return err
+	}
+	return nil
 }
